@@ -1,0 +1,4 @@
+__pycache__
+.parcel-cache
+dist
+node_modules
