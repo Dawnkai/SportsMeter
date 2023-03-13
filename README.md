@@ -21,6 +21,8 @@ npm start
 flask --app server run
 ```
 
+You can access the website on `http://localhost:1234`.
+
 ### Bulding (production)
 ```bash
 npm build
