@@ -12,18 +12,25 @@ $ pip install -r requirements.txt
 ```
 
 ### Setup (development)
+**To start everything together**:
+```bash
+$ npm start
+```
+**To run everything separately**:
 1. Start frontend:
 ```bash
-npm start
+$ npm parcel
 ```
 2. Start backend:
 ```bash
-flask --app server run
+$ flask --app server run
 ```
 
 You can access the website on `http://localhost:1234`.
 
 ### Bulding (production)
 ```bash
-npm build
+$ npm build
 ```
+
+### DO NOT UPLOAD `node_modules` NOR `dist` FOLDER NOR `.parcel-cache` NOR `__pycache__`!
