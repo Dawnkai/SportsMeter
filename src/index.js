@@ -29,8 +29,6 @@ const App = () => {
             <BrowserRouter>
                 <Routes>
                     <Route exact path="/" element={<MainPage/>}/>
-                    <Route path="/login" element={<SignInPage/>}/>
-                    <Route path="/register" element={<SignUpPage/>}/>
                 </Routes>
             </BrowserRouter>
             <Copyright/>
