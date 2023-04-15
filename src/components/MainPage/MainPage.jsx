@@ -50,9 +50,9 @@ export default function MainPage() {
                             <List>
                                 {
                                     seasons.map((season) => 
-                                        <ListItem disablePadding key={season.id}>
+                                        <ListItem disablePadding key={season.season_id}>
                                             <ListItemButton>
-                                                <ListItemText primary={season.title} onClick={fetchSeasonInfo} id={`${season.id}`}/>
+                                                <ListItemText primary={season.season_title} onClick={fetchSeasonInfo} id={`${season.season_id}`}/>
                                             </ListItemButton>
                                         </ListItem>
                                     )
@@ -70,7 +70,7 @@ export default function MainPage() {
                             <Divider/>
                             <Stack spacing={2}>
                                 {
-                                    matches.map((match) => <MatchItem text={match.title} key={match.id}/>)
+                                    matches.map((match) => <MatchItem text={match.match_title} key={match.match_id}/>)
                                 }
                             </Stack>
                         </CardContent>
