@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import MainPage from './components/MainPage/MainPage';
+import MatchDetails from './components/MatchDetails/MatchDetails';
 import './styles.css';
 
 const theme = createTheme();
@@ -29,6 +30,7 @@ const App = () => {
             <BrowserRouter>
                 <Routes>
                     <Route exact path="/" element={<MainPage/>}/>
+                    <Route path="/matches/:match_id" element={<MatchDetails/>}/>
                 </Routes>
             </BrowserRouter>
             <Copyright/>
