@@ -1,9 +1,17 @@
 from flask import jsonify, Flask, request
 from flask_jwt_extended import create_access_token, JWTManager
 
+from sqlite_driver import SqliteDriver
+
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
 jwt = JWTManager(app)
+db = SqliteDriver("database.db")
+
+@app.before_first_request
+def setup_database():
+    db.create_tables()
+    db.add_mock_data()
 
 @app.route("/api/register", methods=["POST"])
 def register():
@@ -21,36 +29,16 @@ def login():
 
 @app.route("/api/seasons", methods=["GET"])
 def get_seasons():
-    return [{"id": 0, "title": "Season 1"}, {"id": 1, "title": "Season 2"}, {"id": 2, "title": "Season 3"}]
+    return db.get_seasons()
 
 @app.route("/api/seasons/<season_id>/matches", methods=["GET"])
 def get_season_matches(season_id):
-    if int(season_id) == 0:
-        return [{"title": "Match 1 (Season 1)", "id": 0}, {"title": "Match 2 (Season 1)", "id": 1}]
-    elif int(season_id) == 1:
-        return [{"title": "Match 1 (Season 2)", "id": 2}]
-    elif int(season_id) == 2:
-        return [{"title": "Match 1 (Season 3)", "id": 3}, {"title": "Match 2 (Season 3)", "id": 4}, {"title": "Match 3 (Season 3)", "id": 5}]
-    return []
+    return db.get_season_matches(season_id)
 
 @app.route("/api/seasons/<season_id>/highscore", methods=["GET"])
 def get_season_highscore(season_id):
-    if int(season_id) == 0:
-        return [
-            {"team_id": 0, "team_name": "Team 1", "team_score": 2000},
-            {"team_id": 2, "team_name": "Team 3", "team_score": 1000},
-            {"team_id": 1, "team_name": "Team 2", "team_score": 500}
-        ]
-    elif int(season_id) == 1:
-        return [
-            {"team_id": 1, "team_name": "Team 2", "team_score": 100},
-            {"team_id": 0, "team_name": "Team 1", "team_score": 50}
-        ]
-    elif int(season_id) == 2:
-        return [
-            {"team_id": 2, "team_name": "Team 3", "team_score": 5000},
-            {"team_id": 0, "team_name": "Team 1", "team_score": 1000},
-            {"team_id": 3, "team_name": "Team 4", "team_score": 100},
-            {"team_id": 1, "team_name": "Team 2", "team_score": 50}
-        ]
-    return []
+    return db.get_season_highscore(season_id)
+
+@app.route("/api/matches/<match_id>", methods=["GET"])
+def get_match_details(match_id):
+    return db.get_match(match_id)
