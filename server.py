@@ -39,6 +39,10 @@ def get_season_matches(season_id):
 def get_season_highscore(season_id):
     return db.get_season_highscore(season_id)
 
-@app.route("/api/matches/<match_id>", methods=["GET"])
+@app.route("/api/matches/<match_id>", methods=["GET", "PUT"])
 def get_match_details(match_id):
+    if request.method == "PUT":
+        if db.edit_match(match_id, request.json):
+            return db.get_match(match_id), 200
+        return {"msg": "unable to edit match"}, 401
     return db.get_match(match_id)
