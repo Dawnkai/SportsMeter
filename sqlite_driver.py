@@ -117,3 +117,13 @@ class SqliteDriver:
             cur.close()
             conn.close()
         return result
+    
+    def edit_match(self, match_id : int, new_data : dict):
+        conn, cur = self.get_handle()
+        if conn:
+            cur.execute(f"UPDATE Matches SET match_title = '{new_data['match_title']}' WHERE match_id = {match_id}")
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        return False
