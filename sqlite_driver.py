@@ -127,3 +127,13 @@ class SqliteDriver:
             conn.close()
             return True
         return False
+    
+    def delete_match(self, match_id : int):
+        conn, cur = self.get_handle()
+        if conn:
+            cur.execute(f"DELETE FROM Matches WHERE match_id = {match_id}")
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        return False

@@ -11,6 +11,7 @@ import { styled } from '@mui/material/styles';
 
 import MatchForm from './MatchForm';
 import { Button } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -85,6 +86,7 @@ export default function MatchDetails() {
                             variant="contained"
                             color="error"
                             onClick={(e) => deleteMatch(e)}
+                            startIcon={<DeleteIcon/>}
                         >
                             Delete
                         </Button>
