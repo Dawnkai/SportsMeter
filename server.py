@@ -27,12 +27,15 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
-@app.route("/api/seasons", methods=["GET"])
+@app.route("/api/seasons", methods=["GET", "POST"])
 def get_seasons():
     return db.get_seasons()
 
-@app.route("/api/seasons/<season_id>/matches", methods=["GET"])
+@app.route("/api/seasons/<season_id>/matches", methods=["GET", "POST"])
 def get_season_matches(season_id):
+    if request.method == "POST":
+        match_data = {"match_title": request.json.get("match_title")}
+        db.add_match(season_id, match_data)
     return db.get_season_matches(season_id)
 
 @app.route("/api/seasons/<season_id>/highscore", methods=["GET"])

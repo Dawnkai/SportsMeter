@@ -137,3 +137,13 @@ class SqliteDriver:
             conn.close()
             return True
         return False
+    
+    def add_match(self, season_id : int, match_data : dict):
+        conn, cur = self.get_handle()
+        if conn:
+            cur.execute(f"INSERT INTO Matches (season_id, match_title) VALUES ({season_id}, '{match_data['match_title']}')")
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        return False

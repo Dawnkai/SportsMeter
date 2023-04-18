@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -10,14 +12,18 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 
 import MatchItem from './MatchItem';
+import AddMatchDialog from './AddMatchDialog';
 import axios from 'axios';
 
 export default function MainPage() {
     const [seasons, setSeasons] = useState([]);
+    const [selectedSeason, setSelectedSeason] = useState(null);
     const [matches, setMatches] = useState([]);
     const [highscore, setHighscore] = useState([]);
+    const [addMatchDialogOpen, setAddMatchDialogOpen] = useState(false);
 
     useEffect(() => {
         const fetchSeasons = async () => {
@@ -35,6 +41,7 @@ export default function MainPage() {
         axios.get(`/api/seasons/${event.currentTarget.id}/highscore`).then((response) => {
             setHighscore(response.data);
         });
+        setSelectedSeason(event.currentTarget.id);
     }
 
     return (
@@ -73,6 +80,15 @@ export default function MainPage() {
                                     matches.map((match) => <MatchItem text={match.match_title} key={match.match_id}/>)
                                 }
                             </Stack>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="success"
+                                startIcon={<AddIcon/>}
+                                onClick={() => setAddMatchDialogOpen(true)}
+                            >
+                                Add new match
+                            </Button>
                         </CardContent>
                     </Card>
                 </Grid>
@@ -96,6 +112,7 @@ export default function MainPage() {
                     </Card>
                 </Grid>
             </Grid>
+            <AddMatchDialog isOpen={addMatchDialogOpen} handleClose={() => setAddMatchDialogOpen(false)} selectedSeason={selectedSeason}/>
         </Box>
     )
 }
