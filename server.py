@@ -27,22 +27,29 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
-@app.route("/api/seasons", methods=["GET"])
+@app.route("/api/seasons", methods=["GET", "POST"])
 def get_seasons():
     return db.get_seasons()
 
-@app.route("/api/seasons/<season_id>/matches", methods=["GET"])
+@app.route("/api/seasons/<season_id>/matches", methods=["GET", "POST"])
 def get_season_matches(season_id):
+    if request.method == "POST":
+        match_data = {"match_title": request.json.get("match_title")}
+        db.add_match(season_id, match_data)
     return db.get_season_matches(season_id)
 
 @app.route("/api/seasons/<season_id>/highscore", methods=["GET"])
 def get_season_highscore(season_id):
     return db.get_season_highscore(season_id)
 
-@app.route("/api/matches/<match_id>", methods=["GET", "PUT"])
-def get_match_details(match_id):
+@app.route("/api/matches/<match_id>", methods=["GET", "PUT", "DELETE"])
+def matches(match_id):
     if request.method == "PUT":
         if db.edit_match(match_id, request.json):
             return db.get_match(match_id), 200
-        return {"msg": "unable to edit match"}, 401
+        return {"msg": "Unable to edit match"}, 401
+    elif request.method == "DELETE":
+        if db.delete_match(match_id):
+            return {"msg": "Match deleted."}, 201
+        return {"msg": "Unable to delete match"}, 404
     return db.get_match(match_id)
