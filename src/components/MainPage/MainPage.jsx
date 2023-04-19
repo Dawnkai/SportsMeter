@@ -31,6 +31,7 @@ export default function MainPage() {
     }
 
     const fetchSeasonInfo = (seasonId) => {
+        if (seasonId === null) return;
         axios.get(`/api/seasons/${seasonId}/matches`).then((response) => {
             setMatches(response.data);
         });
@@ -92,7 +93,12 @@ export default function MainPage() {
                             <Divider/>
                             <Stack spacing={2}>
                                 {
-                                    matches.map((match) => <MatchItem text={match.match_title} key={match.match_id} id={match.match_id}/>)
+                                    matches.map((match) => 
+                                    <MatchItem 
+                                        text={match.match_title} 
+                                        key={match.match_id} 
+                                        match_id={match.match_id}
+                                    />)
                                 }
                             </Stack>
                             <Button
