@@ -101,7 +101,7 @@ export default function MainPage() {
                                     />)
                                 }
                             </Stack>
-                            <Button
+                            { selectedSeason && <Button
                                 type="submit"
                                 variant="contained"
                                 color="success"
@@ -109,7 +109,7 @@ export default function MainPage() {
                                 onClick={() => setAddMatchDialogOpen(true)}
                             >
                                 Add new match
-                            </Button>
+                            </Button>}
                         </CardContent>
                     </Card>
                 </Grid>
