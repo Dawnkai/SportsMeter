@@ -14,7 +14,14 @@ import SignUpPage from './components/Login/SignUpPage';
 
 import './styles.css';
 
-const theme = createTheme();
+const theme = createTheme({
+    palette: {
+        neutral: {
+            main: '#64748B',
+            contrastText: '#fff',
+        },
+    }
+});
 
 const Copyright = () => {
     return (

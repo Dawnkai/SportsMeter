@@ -25,24 +25,33 @@ export default function MainPage() {
     const [highscore, setHighscore] = useState([]);
     const [addMatchDialogOpen, setAddMatchDialogOpen] = useState(false);
 
-    useEffect(() => {
-        const fetchSeasons = async () => {
-            const result = await axios('/api/seasons');
-            setSeasons(result.data);
-        }
-        fetchSeasons();
-    }, []);
+    const fetchSeasons = async () => {
+        const result = await axios('/api/seasons');
+        setSeasons(result.data);
+    }
 
-    const fetchSeasonInfo = (event) => {
-        event.preventDefault();
-        axios.get(`/api/seasons/${event.currentTarget.id}/matches`).then((response) => {
+    const fetchSeasonInfo = (seasonId) => {
+        if (seasonId === null) return;
+        axios.get(`/api/seasons/${seasonId}/matches`).then((response) => {
             setMatches(response.data);
         });
-        axios.get(`/api/seasons/${event.currentTarget.id}/highscore`).then((response) => {
+        axios.get(`/api/seasons/${seasonId}/highscore`).then((response) => {
             setHighscore(response.data);
         });
-        setSelectedSeason(event.currentTarget.id);
+        setSelectedSeason(seasonId);
     }
+
+    const handleModalClose = (refetchSeasons = false) => {
+        if (refetchSeasons) {
+            fetchSeasons();
+            fetchSeasonInfo(selectedSeason);
+        }
+        setAddMatchDialogOpen(false);
+    }
+
+    useEffect(() => {
+        fetchSeasons();
+    }, []);    
 
     return (
         <Box m={3}>
@@ -59,7 +68,14 @@ export default function MainPage() {
                                     seasons.map((season) => 
                                         <ListItem disablePadding key={season.season_id}>
                                             <ListItemButton>
-                                                <ListItemText primary={season.season_title} onClick={fetchSeasonInfo} id={`${season.season_id}`}/>
+                                                <ListItemText 
+                                                    primary={season.season_title} 
+                                                    onClick={(event) => {
+                                                        event.preventDefault();
+                                                        fetchSeasonInfo(event.currentTarget.id);
+                                                    }} 
+                                                    id={`${season.season_id}`}
+                                                />
                                             </ListItemButton>
                                         </ListItem>
                                     )
@@ -77,10 +93,15 @@ export default function MainPage() {
                             <Divider/>
                             <Stack spacing={2}>
                                 {
-                                    matches.map((match) => <MatchItem text={match.match_title} key={match.match_id} id={match.match_id}/>)
+                                    matches.map((match) => 
+                                    <MatchItem 
+                                        text={match.match_title} 
+                                        key={match.match_id} 
+                                        match_id={match.match_id}
+                                    />)
                                 }
                             </Stack>
-                            <Button
+                            { selectedSeason && <Button
                                 type="submit"
                                 variant="contained"
                                 color="success"
@@ -88,7 +109,7 @@ export default function MainPage() {
                                 onClick={() => setAddMatchDialogOpen(true)}
                             >
                                 Add new match
-                            </Button>
+                            </Button>}
                         </CardContent>
                     </Card>
                 </Grid>
@@ -112,7 +133,7 @@ export default function MainPage() {
                     </Card>
                 </Grid>
             </Grid>
-            <AddMatchDialog isOpen={addMatchDialogOpen} handleClose={() => setAddMatchDialogOpen(false)} selectedSeason={selectedSeason}/>
+            <AddMatchDialog isOpen={addMatchDialogOpen} handleClose={handleModalClose} selectedSeason={selectedSeason}/>
         </Box>
     )
 }

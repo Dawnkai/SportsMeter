@@ -1,6 +1,7 @@
 import React from 'react';
 
 import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Toolbar from '@mui/material/Toolbar';
@@ -13,9 +14,11 @@ export default function NavigationBar() {
     return (
         <AppBar position="static">
             <Toolbar>
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1}} onClick={() => navigate("/")} className="cursor-item">
-                    Sports Meter
-                </Typography>
+                <Box sx={{ flexGrow: 1}}>
+                    <Typography variant="h6" sx={{ width: '10%'}} onClick={() => navigate("/")} className="cursor-item">
+                        Sports Meter
+                    </Typography>
+                </Box>
                 <Button color="inherit">Login</Button>
             </Toolbar>
         </AppBar>

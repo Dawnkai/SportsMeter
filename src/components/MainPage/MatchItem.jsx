@@ -17,6 +17,11 @@ export default function MatchItem({text, match_id}) {
     const navigate = useNavigate();
 
     return (
-        <StyledItem onClick={() => navigate(`/matches/${match_id}`)} className="cursor-item">{text}</StyledItem>
+        <StyledItem 
+            onClick={() => navigate(`/matches/${match_id}`)} 
+            className="cursor-item"
+        >
+            {text}
+        </StyledItem>
     );
 }

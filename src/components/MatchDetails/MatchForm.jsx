@@ -44,7 +44,7 @@ export default function MatchForm({setMatchDetails, setIsEditing}) {
                 Save
             </Button>
             <Button
-                variant="contained"
+                variant="outlined"
                 color="error"
                 onClick={() => setIsEditing(false)}
             >

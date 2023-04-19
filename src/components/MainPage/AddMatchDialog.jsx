@@ -11,11 +11,7 @@ import Box from '@mui/material/Box';
 
 import axios from 'axios';
 
-import { useNavigate } from 'react-router-dom';
-
 export default function AddMatchDialog({isOpen, handleClose, selectedSeason}) {
-
-    const navigate = useNavigate();
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -23,8 +19,7 @@ export default function AddMatchDialog({isOpen, handleClose, selectedSeason}) {
         axios.post(`/api/seasons/${selectedSeason}/matches`, {
             match_title: data.get('match_title')
         }).then(() => {
-            handleClose();
-            navigate("/");
+            handleClose(true);
         });
     }
 
@@ -57,7 +52,7 @@ export default function AddMatchDialog({isOpen, handleClose, selectedSeason}) {
             </Box>
         </DialogContent>
         <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={() => handleClose(false)}>Cancel</Button>
             <Button type="submit" form="addMatchForm">Add</Button>
         </DialogActions>
     </Dialog>
