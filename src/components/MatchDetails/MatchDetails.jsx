@@ -23,8 +23,14 @@ export default function MatchDetails() {
 
     useEffect(() => {
         const fetchMatchDetails = async () => {
-            const result = await axios(`/api/matches/${match_id}`);
-            setMatchDetails(result.data);
+            try {
+                const result = await axios(`/api/matches/${match_id}`);
+                setMatchDetails(result?.data);
+            }
+            catch (error) {
+                console.log(error);
+                navigate("/");
+            }
         }
         fetchMatchDetails();
     }, []);
@@ -37,7 +43,11 @@ export default function MatchDetails() {
         event.preventDefault();
         axios.delete(`/api/matches/${match_id}`, {})
         .then((response) => {
-            if (response.status == 201) navigate("/");
+            if (response?.status == 201) navigate("/");
+        })
+        .catch((error) => {
+            console.log(error);
+            navigate("/");
         });
     }
 
@@ -58,19 +68,19 @@ export default function MatchDetails() {
                                 <ListItem>
                                     <ListItemText
                                         primary="Match ID"
-                                        secondary={matchDetails.match_id}
+                                        secondary={matchDetails?.match_id}
                                     />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemText
                                         primary="Match title"
-                                        secondary={matchDetails.match_title}
+                                        secondary={matchDetails?.match_title}
                                     />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemText
                                         primary="Season title"
-                                        secondary={matchDetails.season_title}
+                                        secondary={matchDetails?.season_title}
                                     />
                                 </ListItem>
                             </List>

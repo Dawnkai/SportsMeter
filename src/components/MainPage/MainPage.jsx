@@ -26,19 +26,27 @@ export default function MainPage() {
     const [addMatchDialogOpen, setAddMatchDialogOpen] = useState(false);
 
     const fetchSeasons = async () => {
-        const result = await axios('/api/seasons');
-        setSeasons(result.data);
+        try {
+            const result = await axios('/api/seasons');
+            setSeasons(result?.data);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     const fetchSeasonInfo = (seasonId) => {
         if (seasonId === null) return;
-        axios.get(`/api/seasons/${seasonId}/matches`).then((response) => {
-            setMatches(response.data);
-        });
-        axios.get(`/api/seasons/${seasonId}/highscore`).then((response) => {
-            setHighscore(response.data);
-        });
-        setSelectedSeason(seasonId);
+        try {
+            axios.get(`/api/seasons/${seasonId}/matches`).then((response) => {
+                setMatches(response?.data);
+            });
+            axios.get(`/api/seasons/${seasonId}/highscore`).then((response) => {
+                setHighscore(response?.data);
+            });
+            setSelectedSeason(seasonId);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     const handleModalClose = (refetchSeasons = false) => {
@@ -66,15 +74,15 @@ export default function MainPage() {
                             <List>
                                 {
                                     seasons.map((season) => 
-                                        <ListItem disablePadding key={season.season_id}>
+                                        <ListItem disablePadding key={season?.season_id}>
                                             <ListItemButton>
                                                 <ListItemText 
-                                                    primary={season.season_title} 
+                                                    primary={season?.season_title} 
                                                     onClick={(event) => {
                                                         event.preventDefault();
-                                                        fetchSeasonInfo(event.currentTarget.id);
+                                                        fetchSeasonInfo(event?.currentTarget.id);
                                                     }} 
-                                                    id={`${season.season_id}`}
+                                                    id={`${season?.season_id}`}
                                                 />
                                             </ListItemButton>
                                         </ListItem>
@@ -95,9 +103,9 @@ export default function MainPage() {
                                 {
                                     matches.map((match) => 
                                     <MatchItem 
-                                        text={match.match_title} 
-                                        key={match.match_id} 
-                                        match_id={match.match_id}
+                                        text={match?.match_title} 
+                                        key={match?.match_id} 
+                                        match_id={match?.match_id}
                                     />)
                                 }
                             </Stack>
@@ -123,8 +131,8 @@ export default function MainPage() {
                             <List>
                                 {
                                     highscore.map((score) => 
-                                        <ListItem disablePadding key={score.team_id}>
-                                            <ListItemText primary={`${score.team_name} (${score.team_score} pts)`}/>
+                                        <ListItem disablePadding key={score?.team_id}>
+                                            <ListItemText primary={`${score?.team_name} (${score?.team_score} pts)`}/>
                                         </ListItem>
                                     )
                                 }
