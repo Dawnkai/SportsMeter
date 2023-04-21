@@ -15,11 +15,14 @@ export default function AddMatchDialog({isOpen, handleClose, selectedSeason}) {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        const data = new FormData(event.currentTarget);
+        const data = new FormData(event?.currentTarget);
         axios.post(`/api/seasons/${selectedSeason}/matches`, {
             match_title: data.get('match_title')
         }).then(() => {
             handleClose(true);
+        }).catch((error) => {
+            console.log(error);
+            handleClose(false);
         });
     }
 

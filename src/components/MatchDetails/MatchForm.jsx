@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -8,16 +8,20 @@ import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 
 export default function MatchForm({setMatchDetails, setIsEditing}) {
+    const navigate = useNavigate();
     const { match_id } = useParams();
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        const data = new FormData(event.currentTarget);
+        const data = new FormData(event?.currentTarget);
         axios.put(`/api/matches/${match_id}`, {
             match_title: data.get('match_title')
         }).then((response) => {
-            setMatchDetails(response.data);
+            setMatchDetails(response?.data);
             setIsEditing(false);
+        }).catch((error) => {
+            console.log(error);
+            navigate("/");
         });
     }
 
