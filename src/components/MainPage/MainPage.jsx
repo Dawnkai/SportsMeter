@@ -103,9 +103,12 @@ export default function MainPage() {
                                 {
                                     matches.map((match) => 
                                     <MatchItem 
-                                        text={match?.match_title} 
                                         key={match?.match_id} 
                                         match_id={match?.match_id}
+                                        team_a={match?.team_a_name}
+                                        team_b={match?.team_b_name}
+                                        team_a_points={match?.team_a_points}
+                                        team_b_points={match?.team_b_points}
                                     />)
                                 }
                             </Stack>
@@ -122,23 +125,33 @@ export default function MainPage() {
                     </Card>
                 </Grid>
                 <Grid item xs={3}>
-                    <Card variant="outlined">
-                        <CardContent>
-                            <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                                Scoreboard
-                            </Typography>
-                            <Divider/>
-                            <List>
-                                {
-                                    highscore.map((score) => 
-                                        <ListItem disablePadding key={score?.team_id}>
-                                            <ListItemText primary={`${score?.team_name} (${score?.team_score} pts)`}/>
-                                        </ListItem>
-                                    )
-                                }
-                            </List>
-                        </CardContent>
-                    </Card>
+                    <Stack spacing={2}>
+                        <Card variant="outlined">
+                            <CardContent>
+                                <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+                                    Leaderboard
+                                </Typography>
+                                <Divider/>
+                                <List>
+                                    {
+                                        highscore.map((score) => 
+                                            <ListItem disablePadding key={score?.team_id}>
+                                                <ListItemText primary={`${score?.team_name} (${score?.team_score} pts)`}/>
+                                            </ListItem>
+                                        )
+                                    }
+                                </List>
+                            </CardContent>
+                        </Card>
+                        <Card variant="outlined">
+                            <CardContent>
+                                <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+                                    Upcoming events
+                                </Typography>
+                                <Divider/>
+                            </CardContent>
+                        </Card>
+                    </Stack>
                 </Grid>
             </Grid>
             <AddMatchDialog isOpen={addMatchDialogOpen} handleClose={handleModalClose} selectedSeason={selectedSeason}/>
