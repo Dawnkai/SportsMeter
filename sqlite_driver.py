@@ -1,3 +1,4 @@
+from csv import reader
 import sqlite3
 
 class SqliteDriver:
@@ -15,62 +16,32 @@ class SqliteDriver:
     def create_tables(self):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute("CREATE TABLE IF NOT EXISTS Seasons(season_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        "season_title TEXT NOT NULL)")
-            conn.commit()
-            cur.execute("CREATE TABLE IF NOT EXISTS Matches(match_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        "match_title TEXT NOT NULL, season_id INTEGER REFERENCES Seasons(season_id))")
-            conn.commit()
-            cur.execute("CREATE TABLE IF NOT EXISTS Teams(team_id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                        " team_name TEXT NOT NULL)")
-            conn.commit()
-            cur.execute("CREATE TABLE IF NOT EXISTS Scores(score_id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                        " season_id INTEGER REFERENCES Seasons(season_id), team_id INTEGER REFERENCES"
-                        " Teams(team_id) NOT NULL, team_score INTEGER NOT NULL)")
+            with open("mock_data/create.sql") as create_script:
+                cur.executescript(create_script.read())
             conn.commit()
             cur.close()
             conn.close()
-    
-    def add_mock_data(self, override : bool = True):
+        
+    def insert_from_csv(self, table : str, filepath : str, delimiter : str):
         conn, cur = self.get_handle()
         if conn:
             try:
-                if override:
-                    cur.execute("DELETE FROM Seasons WHERE season_id BETWEEN 0 AND 2")
-                    conn.commit()
-                    cur.execute("DELETE FROM Matches WHERE match_id BETWEEN 0 AND 5")
-                    conn.commit()
-                    cur.execute("DELETE FROM Teams WHERE team_id BETWEEN 0 AND 3")
-                    conn.commit()
-                    cur.execute("DELETE FROM Scores WHERE score_id BETWEEN 0 AND 8")
-                    conn.commit()
-                cur.execute("INSERT INTO Seasons(season_id, season_title) VALUES "
-                            "(0, 'Season 1'),"
-                            "(1, 'Season 2'),"
-                            "(2, 'Season 3')")
-                conn.commit()
-                cur.execute("INSERT INTO Matches(match_id, match_title, season_id) VALUES "
-                            "(0, 'Match 1 (Season 1)', 0),"
-                            "(1, 'Match 2 (Season 1)', 0),"
-                            "(2, 'Match 1 (Season 2)', 1),"
-                            "(3, 'Match 1 (Season 3)', 2),"
-                            "(4, 'Match 2 (Season 3)', 2),"
-                            "(5, 'Match 3 (Season 3)', 2)")
-                conn.commit()
-                cur.execute("INSERT INTO Teams(team_id, team_name) VALUES "
-                            "(0, 'Team 1'),"
-                            "(1, 'Team 2'),"
-                            "(2, 'Team 3')")
-                conn.commit()
-                cur.execute("INSERT INTO Scores(score_id, season_id, team_id, team_score) VALUES "
-                            "(0, 0, 0, 2000), (1, 0, 2, 1000), (2, 0, 1, 500),"
-                            "(3, 1, 1, 100), (4, 1, 0, 50),"
-                            "(5, 2, 2, 5000), (6, 2, 0, 1000), (7, 2, 3, 100), (8, 2, 1, 50)")
+                with open(filepath, encoding="utf-8") as csv_file:
+                    content = reader(csv_file, delimiter=delimiter)
+                    header = next(content)
+
+                    for row in content:
+                        cur.execute(
+                            f"INSERT OR REPLACE INTO {table} ({','.join(header)}) VALUES ({','.join(row)});"
+                        )
                 conn.commit()
             except sqlite3.Error as error:
-                print(f"Sqlite error while adding mock data: {error}")
-            cur.close()
-            conn.close()
+                print(f"Sqlite error while adding data from file {filepath} : {error}")
+    
+    def add_mock_data(self):
+        self.insert_from_csv("Seasons", "mock_data/seasons.csv", ";")
+        self.insert_from_csv("Teams", "mock_data/teams.csv", ";")
+        self.insert_from_csv("Matches", "mock_data/matches.csv", ";")
 
     def get_seasons(self):
         conn, cur = self.get_handle()
@@ -86,8 +57,20 @@ class SqliteDriver:
         conn, cur = self.get_handle()
         rows = []
         if conn:
-            cur.execute(f"SELECT match_id, match_title FROM Matches WHERE season_id = {season_id}")
-            rows = [{"match_id": entry[0], "match_title": entry[1]} for entry in cur.fetchall()]
+            cur.execute(f"SELECT " 
+                        f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
+                        f"t2.team_name, m.team_a_points, m.team_b_points "
+                        f"FROM Matches m, Teams t1, Teams t2 "
+                        f"WHERE m.match_season = {season_id} AND m.team_a_id = t1.team_id AND m.team_b_id = t2.team_id")
+            rows = [{
+                "match_id": entry[0],
+                "match_date": entry[1],
+                "match_start_time": entry[2],
+                "match_end_time": entry[3],
+                "team_a_name": entry[4],
+                "team_b_name": entry[5],
+                "team_a_points": entry[6],
+                "team_b_points": entry[7]} for entry in cur.fetchall()]
             cur.close()
             conn.close()
         return rows
@@ -96,9 +79,11 @@ class SqliteDriver:
         conn, cur = self.get_handle()
         rows = []
         if conn:
-            cur.execute((f"SELECT team.team_id, team.team_name, score.team_score FROM Scores score,"
-                         f" Teams team WHERE score.season_id = {season_id} AND score.team_id ="
-                         f" team.team_id ORDER BY score.team_score DESC"))
+            cur.execute((f"SELECT team_id, team_name, SUM(points) AS highscore FROM ("
+                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_a_points as points FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_a_id"
+                         f" UNION ALL "
+                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_b_points as points FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_b_id"
+                         f") GROUP BY team_name ORDER BY highscore DESC"))
             rows = [{"team_id": entry[0], "team_name": entry[1], "team_score": entry[2]} for entry in cur.fetchall()]
             cur.close()
             conn.close()
@@ -108,12 +93,23 @@ class SqliteDriver:
         conn, cur = self.get_handle()
         result = {}
         if conn:
-            cur.execute((f"SELECT match.match_id, match.match_title, season.season_title FROM"
-                         f" Matches match, Seasons season WHERE match_id = {match_id} AND"
-                         f" match.season_id = season.season_id"))
+            cur.execute(f"SELECT " 
+                        f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
+                        f"t2.team_name, m.team_a_points, m.team_b_points "
+                        f"FROM Matches m, Teams t1, Teams t2 "
+                        f"WHERE m.match_id = {match_id} AND m.team_a_id = t1.team_id AND m.team_b_id = t2.team_id")
             row = cur.fetchall()
             if len(row) > 0:
-                result = {"match_id": row[0][0], "match_title": row[0][1], "season_title": row[0][2]}
+                result = {
+                    "match_id": row[0][0],
+                    "match_date": row[0][1],
+                    "match_start_time": row[0][2],
+                    "match_end_time": row[0][3],
+                    "team_a_name": row[0][4],
+                    "team_b_name": row[0][5],
+                    "team_a_points": row[0][6],
+                    "team_b_points": row[0][7]
+                    }
             cur.close()
             conn.close()
         return result
