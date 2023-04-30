@@ -73,25 +73,55 @@ export default function MatchDetails() {
                                 </ListItem>
                                 <ListItem>
                                     <ListItemText
-                                        primary="Match title"
-                                        secondary={matchDetails?.match_title}
+                                        primary="Team A"
+                                        secondary={matchDetails?.team_a_name}
                                     />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemText
-                                        primary="Season title"
-                                        secondary={matchDetails?.season_title}
+                                        primary="Team A points"
+                                        secondary={matchDetails?.team_a_points}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Team B"
+                                        secondary={matchDetails?.team_b_name}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Team B points"
+                                        secondary={matchDetails?.team_b_points}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Match date"
+                                        secondary={matchDetails?.match_date}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Match start time"
+                                        secondary={matchDetails?.match_start_time}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Match end time"
+                                        secondary={matchDetails?.match_end_time}
                                     />
                                 </ListItem>
                             </List>
                         </Demo>
-                        <Button
+                        {/* <Button
                             variant="contained"
                             color="secondary"
                             onClick={() => setIsEditing(true)}
                         >
                             Edit
-                        </Button>
+                        </Button> */}
                         <Button
                             variant="contained"
                             color="error"
