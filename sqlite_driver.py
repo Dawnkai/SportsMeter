@@ -48,7 +48,14 @@ class SqliteDriver:
         rows = []
         if conn:
             cur.execute("SELECT * FROM Seasons")
-            rows = [{"season_id": entry[0], "season_title": entry[1]} for entry in cur.fetchall()]
+            rows = [
+                {
+                    "season_id": entry[0],
+                    "season_title": entry[1],
+                    "season_start_date": entry[2],
+                    "season_end_date": entry[3]
+                } for entry in cur.fetchall()
+            ]
             cur.close()
             conn.close()
         return rows
@@ -61,7 +68,8 @@ class SqliteDriver:
                         f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
                         f"t2.team_name, m.team_a_points, m.team_b_points "
                         f"FROM Matches m, Teams t1, Teams t2 "
-                        f"WHERE m.match_season = {season_id} AND m.team_a_id = t1.team_id AND m.team_b_id = t2.team_id")
+                        f"WHERE m.match_season = {season_id} AND m.team_a_id = t1.team_id "
+                        f"AND m.team_b_id = t2.team_id")
             rows = [{
                 "match_id": entry[0],
                 "match_date": entry[1],
@@ -80,9 +88,11 @@ class SqliteDriver:
         rows = []
         if conn:
             cur.execute((f"SELECT team_id, team_name, SUM(points) AS highscore FROM ("
-                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_a_points as points FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_a_id"
+                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_a_points as points "
+                         f"FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_a_id"
                          f" UNION ALL "
-                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_b_points as points FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_b_id"
+                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_b_points as points "
+                         f"FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_b_id"
                          f") GROUP BY team_name ORDER BY highscore DESC"))
             rows = [{"team_id": entry[0], "team_name": entry[1], "team_score": entry[2]} for entry in cur.fetchall()]
             cur.close()
@@ -137,7 +147,10 @@ class SqliteDriver:
     def add_match(self, season_id : int, match_data : dict):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute(f"INSERT INTO Matches (season_id, match_title) VALUES ({season_id}, '{match_data['match_title']}')")
+            cur.execute(
+                f"INSERT INTO Matches (season_id, match_title) "
+                f"VALUES ({season_id}, '{match_data['match_title']}')"
+            )
             conn.commit()
             cur.close()
             conn.close()
