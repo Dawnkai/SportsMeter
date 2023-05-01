@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
+import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -9,16 +10,23 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 
-import MatchForm from './MatchForm';
-import { Button } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import { useNavigate } from 'react-router-dom';
+import MatchForm from './MatchForm';
+
+import parseDate from '../../utils/parseDate';
+import parseTime from '../../utils/parseTime';
 
 export default function MatchDetails() {
     const { match_id } = useParams();
     const [ isEditing, setIsEditing ] = useState(false);
-    const [ matchDetails, setMatchDetails ] = useState({"match_id": 0, "match_title": "", "season_title": ""});
+    const [ matchDetails, setMatchDetails ] = useState(
+        {
+            "match_id": 0, "team_a_name": "", "team_a_points": 0,
+            "team_b_name": "", "team_b_points": 0, "match_date": "",
+            "match_start_time": "", "match_end_time": ""
+        }
+    );
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -51,6 +59,18 @@ export default function MatchDetails() {
         });
     }
 
+    const DateText = (dateStr) => {
+        const date = parseDate(dateStr, false);
+        if (date === null) return "";
+        return `${date["day"]}.${date["month"]}.${date['year']}`;
+    }
+
+    const TimeText = (timeStr) => {
+        const time = parseTime(timeStr, false);
+        if (time === null) return "";
+        return `${time["hours"]}:${time["minutes"]}:${time["seconds"]}`;
+    }
+
     return (
         <>
             <Typography variant="h1">Match details</Typography>
@@ -73,25 +93,55 @@ export default function MatchDetails() {
                                 </ListItem>
                                 <ListItem>
                                     <ListItemText
-                                        primary="Match title"
-                                        secondary={matchDetails?.match_title}
+                                        primary="Team A"
+                                        secondary={matchDetails?.team_a_name}
                                     />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemText
-                                        primary="Season title"
-                                        secondary={matchDetails?.season_title}
+                                        primary="Team A points"
+                                        secondary={matchDetails?.team_a_points}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Team B"
+                                        secondary={matchDetails?.team_b_name}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Team B points"
+                                        secondary={matchDetails?.team_b_points}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Match date"
+                                        secondary={DateText(matchDetails?.match_date)}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Match start time"
+                                        secondary={TimeText(matchDetails?.match_start_time)}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Match end time"
+                                        secondary={TimeText(matchDetails?.match_end_time)}
                                     />
                                 </ListItem>
                             </List>
                         </Demo>
-                        <Button
+                        {/* <Button
                             variant="contained"
                             color="secondary"
                             onClick={() => setIsEditing(true)}
                         >
                             Edit
-                        </Button>
+                        </Button> */}
                         <Button
                             variant="contained"
                             color="error"

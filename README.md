@@ -19,7 +19,7 @@ $ npm start
 **To run everything separately**:
 1. Start frontend:
 ```bash
-$ npm parcel
+$ npm run parcel
 ```
 2. Start backend:
 ```bash

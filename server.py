@@ -42,8 +42,12 @@ def get_season_matches(season_id):
 def get_season_highscore(season_id):
     return db.get_season_highscore(season_id)
 
+@app.route("/api/events", methods=["GET"])
+def get_events():
+    return db.get_events()
+
 @app.route("/api/matches/<match_id>", methods=["GET", "PUT", "DELETE"])
-def matches(match_id):
+def get_matches(match_id):
     if request.method == "PUT":
         if db.edit_match(match_id, request.json):
             return db.get_match(match_id), 200
