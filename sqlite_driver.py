@@ -42,6 +42,7 @@ class SqliteDriver:
         self.insert_from_csv("Seasons", "mock_data/seasons.csv", ";")
         self.insert_from_csv("Teams", "mock_data/teams.csv", ";")
         self.insert_from_csv("Matches", "mock_data/matches.csv", ";")
+        self.insert_from_csv("Events", "mock_data/events.csv", ";")
 
     def get_seasons(self):
         conn, cur = self.get_handle()
@@ -156,3 +157,19 @@ class SqliteDriver:
             conn.close()
             return True
         return False
+    
+    def get_events(self):
+        conn, cur = self.get_handle()
+        rows = []
+        if conn:
+            cur.execute("SELECT event_id, event_title, event_description FROM Events")
+            rows = [
+                {
+                    "event_id": entry[0],
+                    "event_title": entry[1],
+                    "event_description": entry[2]
+                } for entry in cur.fetchall()
+            ]
+            cur.close()
+            conn.close()
+        return rows
