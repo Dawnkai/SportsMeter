@@ -9,8 +9,8 @@ import Typography from '@mui/material/Typography';
 import MainPage from './components/MainPage/MainPage';
 import MatchDetails from './components/MatchDetails/MatchDetails';
 import NavigationBar from './components/NavigationBar';
-import SignInPage from './components/Login/SignInPage';
-import SignUpPage from './components/Login/SignUpPage';
+//import SignInPage from './components/Login/SignInPage';
+//import SignUpPage from './components/Login/SignUpPage';
 
 import './styles.css';
 
@@ -35,7 +35,8 @@ const Copyright = () => {
         </Typography>
     )
 }
-
+//<Route path="/login" element={<SignInPage/>}/>
+//<Route path="/register" element={<SignUpPage/>}/> add after matchDetails element
 const App = () => {
     return (
         <ThemeProvider theme={theme}>
@@ -45,8 +46,7 @@ const App = () => {
                 <Routes>
                     <Route exact path="/" element={<MainPage/>}/>
                     <Route path="/matches/:match_id" element={<MatchDetails/>}/>
-                    <Route path="/login" element={<SignInPage/>}/>
-                    <Route path="/register" element={<SignUpPage/>}/>
+                    
                 </Routes>
             </BrowserRouter>
             <Copyright/>
