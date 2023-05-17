@@ -8,6 +8,7 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
+import Container from '@mui/material/Container';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -18,6 +19,8 @@ import Typography from '@mui/material/Typography';
 import AddMatchDialog from './AddMatchDialog';
 import EventItem from './EventItem';
 import MatchItem from './MatchItem';
+import { grey } from '@mui/material/colors';
+import { BorderColor } from '@mui/icons-material';
 
 export default function MainPage() {
     const [seasons, setSeasons] = useState([]);
@@ -40,7 +43,7 @@ export default function MainPage() {
         try {
             const result = await axios('/api/events');
             setEvents(result?.data);
-        } catch(error) {
+        } catch (error) {
             console.log(error);
         }
     }
@@ -68,60 +71,87 @@ export default function MainPage() {
         setAddMatchDialogOpen(false);
     }
 
+    const BorderBox = ({ children }) => {
+        return (
+            <Box
+                sx={{
+                    border: '1px solid',
+                    borderRadius: '4px',
+                    borderColor: 'lightgrey',
+                    padding: '12px',
+                    mt: 2,
+                    mb: 2,
+                }}
+            >
+                {children}
+            </Box>
+        );
+    }
+
     useEffect(() => {
         fetchSeasons();
         fetchEvents();
-    }, []);    
+        fetchSeasonInfo(0);
+    }, []);
 
     return (
         <Box m={3}>
-            <Grid container spacing={2}>
-                <Grid item xs={3}>
-                    <Card variant="outlined">
-                        <CardContent>
-                            <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                                Seasons
+            <BorderBox>
+                <Stack direction="row" spacing={1}> {/* This is top list showing list of sports (only quadball rn) */}
+                    <ListItem disablePadding>
+                        <ListItemButton>
+                            <Typography sx={{ fontSize: 24 }} color="text.secondary" gutterBottom>
+                                Quadball
                             </Typography>
-                            <Divider/>
-                            <List>
-                                {
-                                    seasons.map((season) => 
-                                        <ListItem disablePadding key={season?.season_id}>
-                                            <ListItemButton>
-                                                <ListItemText 
-                                                    primary={season?.season_title} 
-                                                    onClick={(event) => {
-                                                        event.preventDefault();
-                                                        fetchSeasonInfo(event?.currentTarget.id);
-                                                    }} 
-                                                    id={`${season?.season_id}`}
-                                                />
-                                            </ListItemButton>
-                                        </ListItem>
-                                    )
-                                }
-                            </List>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid item xs={6}>
+                        </ListItemButton>
+                    </ListItem>
+                </Stack>
+            </BorderBox>
+            <BorderBox>
+                <Stack direction="row" spacing={1}> {/* This is another list showing seasons */}
+                    {
+                        seasons.map((season, index) => (
+                            <React.Fragment key={season?.season_id}>
+                              <ListItem disablePadding>
+                                <ListItemButton>
+                                  <ListItemText
+                                    primary={season?.season_title}
+                                    onClick={(event) => {
+                                      event.preventDefault();
+                                      fetchSeasonInfo(event?.currentTarget.id);
+                                    }}
+                                    id={`${season?.season_id}`}
+                                  />
+                                </ListItemButton>
+                              </ListItem>
+                              {index !== seasons.length - 1 && (
+                                <Divider orientation="vertical" flexItem />
+                              )}
+                            </React.Fragment>
+                          ))
+                    }
+                </Stack>
+            </BorderBox>
+
+            <Grid container spacing={2}>
+                <Grid item xs={9}>
                     <Card variant="outlined">
                         <CardContent>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                 Matches
                             </Typography>
-                            <Divider/>
+                            <Divider />
                             <Stack spacing={2}>
                                 {
-                                    matches.map((match) => 
-                                    <MatchItem 
-                                        key={match?.match_id} 
-                                        match_id={match?.match_id}
-                                        team_a={match?.team_a_name}
-                                        team_b={match?.team_b_name}
-                                        team_a_points={match?.team_a_points}
-                                        team_b_points={match?.team_b_points}
-                                    />)
+                                    matches.map((match) =>
+                                        <MatchItem
+                                            key={match?.match_id}
+                                            match_id={match?.match_id}
+                                            team_a={match?.team_a_name}
+                                            team_b={match?.team_b_name}
+                                            team_a_points={match?.team_a_points}
+                                            team_b_points={match?.team_b_points}
+                                        />)
                                 }
                             </Stack>
                             {/* { selectedSeason && <Button
@@ -143,12 +173,12 @@ export default function MainPage() {
                                 <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                     Leaderboard
                                 </Typography>
-                                <Divider/>
+                                <Divider />
                                 <List>
                                     {
-                                        highscore.map((score) => 
+                                        highscore.map((score) =>
                                             <ListItem disablePadding key={score?.team_id}>
-                                                <ListItemText 
+                                                <ListItemText
                                                     primary={`${score?.team_name} (${score?.team_score} pts)`}
                                                 />
                                             </ListItem>
@@ -162,12 +192,12 @@ export default function MainPage() {
                                 <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                     Upcoming events
                                 </Typography>
-                                <Divider/>
+                                <Divider />
                                 <List>
                                     {
-                                        events.slice(0,2).map((event) =>
+                                        events.slice(0, 2).map((event) =>
                                             <ListItem disablePadding key={event.event_id}>
-                                                <EventItem 
+                                                <EventItem
                                                     event_title={event.event_title}
                                                     event_description={event.event_description}
                                                 />
@@ -180,7 +210,7 @@ export default function MainPage() {
                     </Stack>
                 </Grid>
             </Grid>
-            <AddMatchDialog 
+            <AddMatchDialog
                 isOpen={addMatchDialogOpen}
                 handleClose={handleModalClose}
                 selectedSeason={selectedSeason}
@@ -188,3 +218,4 @@ export default function MainPage() {
         </Box>
     )
 }
+
