@@ -27,23 +27,30 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
-@app.route("/api/seasons", methods=["GET", "POST"])
+@app.route("/api/seasons", methods=["GET", "PUT", "POST"])
 def get_seasons():
+    if request.method == "POST":
+        db.add_season(request.json)
+    elif request.method == "PUT":
+        db.edit_season(request.json)
     return db.get_seasons()
 
 @app.route("/api/seasons/<season_id>/matches", methods=["GET", "POST"])
 def get_season_matches(season_id):
     if request.method == "POST":
-        match_data = {"match_title": request.json.get("match_title")}
-        db.add_match(season_id, match_data)
+        db.add_match(season_id, request.json)
     return db.get_season_matches(season_id)
 
 @app.route("/api/seasons/<season_id>/highscore", methods=["GET"])
 def get_season_highscore(season_id):
     return db.get_season_highscore(season_id)
 
-@app.route("/api/events", methods=["GET"])
+@app.route("/api/events", methods=["GET", "PUT", "POST"])
 def get_events():
+    if request.method == "POST":
+        db.add_event(request.json)
+    elif request.method == "PUT":
+        db.edit_event(request.json)
     return db.get_events()
 
 @app.route("/api/matches/<match_id>", methods=["GET", "PUT", "DELETE"])
