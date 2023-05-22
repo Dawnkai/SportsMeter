@@ -13,10 +13,10 @@ class SqliteDriver:
             print(f"Sqlite error in get_connection: {error}")
         return [conn, conn.cursor()]
     
-    def create_tables(self):
+    def create_tables(self, script_path : str):
         conn, cur = self.get_handle()
         if conn:
-            with open("create.sql") as create_script:
+            with open(script_path) as create_script:
                 cur.executescript(create_script.read())
             conn.commit()
             cur.close()
@@ -38,11 +38,11 @@ class SqliteDriver:
             except sqlite3.Error as error:
                 print(f"Sqlite error while adding data from file {filepath} : {error}")
     
-    def add_mock_data(self):
-        self.insert_from_csv("Seasons", "../mock_data/seasons.csv", ";")
-        self.insert_from_csv("Teams", "../mock_data/teams.csv", ";")
-        self.insert_from_csv("Matches", "../mock_data/matches.csv", ";")
-        self.insert_from_csv("Events", "../mock_data/events.csv", ";")
+    def add_mock_data(self, data_directory : str):
+        self.insert_from_csv("Seasons", f"{data_directory}/seasons.csv", ";")
+        self.insert_from_csv("Teams", f"{data_directory}/teams.csv", ";")
+        self.insert_from_csv("Matches", f"{data_directory}/matches.csv", ";")
+        self.insert_from_csv("Events", f"{data_directory}/events.csv", ";")
 
     def event_input_valid(self, event_input : dict):
         allowed_fields = ["event_id", "event_title", "event_description"]

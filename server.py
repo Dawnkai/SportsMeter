@@ -10,8 +10,8 @@ db = SqliteDriver("database.db")
 
 @app.before_first_request
 def setup_database():
-    db.create_tables()
-    db.add_mock_data()
+    db.create_tables("sqlite/create.sql")
+    db.add_mock_data("mock_data")
 
 @app.route("/api/register", methods=["POST"])
 def register():
@@ -27,34 +27,50 @@ def login():
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
-@app.route("/api/seasons", methods=["GET", "PUT", "POST"])
-def get_seasons():
+@app.route("/api/seasons", methods=["GET", "POST"])
+def seasons():
     if request.method == "POST":
         db.add_season(request.json)
-    elif request.method == "PUT":
-        db.edit_season(request.json)
     return db.get_seasons()
 
+@app.route("/api/season/<season_id>", methods=["PUT", "DELETE"])
+def season(season_id):
+    if request.method == "PUT":
+        db.edit_season(season_id, request.json)
+        return db.get_seasons()
+    db.delete_season(season_id)
+    return jsonify({"msg": "Season deleted."}), 204
+
 @app.route("/api/seasons/<season_id>/matches", methods=["GET", "POST"])
-def get_season_matches(season_id):
+def season_matches(season_id):
     if request.method == "POST":
         db.add_match(season_id, request.json)
     return db.get_season_matches(season_id)
 
 @app.route("/api/seasons/<season_id>/highscore", methods=["GET"])
-def get_season_highscore(season_id):
+def season_highscore(season_id):
     return db.get_season_highscore(season_id)
 
-@app.route("/api/events", methods=["GET", "PUT", "POST"])
-def get_events():
+@app.route("/api/events", methods=["GET", "POST"])
+def events():
     if request.method == "POST":
         db.add_event(request.json)
-    elif request.method == "PUT":
-        db.edit_event(request.json)
     return db.get_events()
 
+@app.route("/api/events/<event_id>", methods=["PUT", "DELETE"])
+def event(event_id):
+    if request.method == "PUT":
+        db.edit_event(event_id, request.json)
+        return db.get_events()
+    db.delete_event(event_id)
+    return jsonify({"msg": "Event deleted"}), 204
+
+@app.route("/api/matches/", methods=["GET"])
+def matches():
+    return db.get_matches()
+
 @app.route("/api/matches/<match_id>", methods=["GET", "PUT", "DELETE"])
-def get_matches(match_id):
+def match(match_id):
     if request.method == "PUT":
         if db.edit_match(match_id, request.json):
             return db.get_match(match_id), 200
@@ -64,3 +80,17 @@ def get_matches(match_id):
             return {"msg": "Match deleted."}, 201
         return {"msg": "Unable to delete match"}, 404
     return db.get_match(match_id)
+
+@app.route("/api/teams/", methods=["GET", "POST"])
+def teams():
+    if request.method == "POST":
+        db.add_team(request.json)
+    return db.get_teams()
+
+@app.route("/api/teams/<team_id>", methods=["PUT", "DELETE"])
+def team(team_id):
+    if request.method == "PUT":
+        db.edit_team(team_id, request.json)
+        return db.get_teams()
+    db.delete_team(team_id)
+    return jsonify({"msg": "Team deleted."}), 204

@@ -8,7 +8,7 @@ class TestSqlite:
     @pytest.fixture
     def database(self):
         db = SqliteDriver("test.db")
-        db.create_tables()
+        db.create_tables("create.sql")
         yield db
         if path.exists("test.db"):
             remove("test.db")
