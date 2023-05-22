@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import MainPage from './components/MainPage/MainPage';
 import MatchDetails from './components/MatchDetails/MatchDetails';
 import NavigationBar from './components/NavigationBar';
+import MainLobby from './components/MatchLobby/MainLobby';
 //import SignInPage from './components/Login/SignInPage';
 //import SignUpPage from './components/Login/SignUpPage';
 
@@ -46,7 +47,8 @@ const App = () => {
                 <Routes>
                     <Route exact path="/" element={<MainPage/>}/>
                     <Route path="/matches/:match_id" element={<MatchDetails/>}/>
-                    
+                    <Route path="/lobby" element={<MainLobby/>}/>
+
                 </Routes>
             </BrowserRouter>
             <Copyright/>

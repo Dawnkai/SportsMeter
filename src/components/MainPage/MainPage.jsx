@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import axios from 'axios';
 
 import AddIcon from '@mui/icons-material/Add';
@@ -94,8 +96,15 @@ export default function MainPage() {
         fetchSeasonInfo(0);
     }, []);
 
+    const navigate = useNavigate();
+
     return (
         <Box m={3}>
+            <Box m={2}>
+                <Button onClick={() => navigate('/lobby')} >
+                    New Match
+                </Button>
+            </Box>
             <BorderBox>
                 <Stack direction="row" spacing={1}> {/* This is top list showing list of sports (only quadball rn) */}
                     <ListItem disablePadding>
