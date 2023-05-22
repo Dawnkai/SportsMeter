@@ -2,3 +2,5 @@ __pycache__
 .parcel-cache
 dist
 node_modules
+database.db
+.pytest_cache
