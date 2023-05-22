@@ -21,3 +21,9 @@ CREATE TABLE IF NOT EXISTS Matches (
     team_a_points INTEGER NULL,
     team_b_points INTEGER NULL
 );
+
+CREATE TABLE IF NOT EXISTS Events (
+    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_title TEXT NOT NULL,
+    event_description TEXT NOT NULL
+);
