@@ -1,7 +1,7 @@
 from flask import jsonify, Flask, request
 from flask_jwt_extended import create_access_token, JWTManager
 
-from sqlite_driver import SqliteDriver
+from sqlite.sqlite_driver import SqliteDriver
 
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
