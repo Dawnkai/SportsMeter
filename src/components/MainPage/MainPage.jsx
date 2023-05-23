@@ -92,7 +92,7 @@ export default function MainPage() {
 
     useEffect(() => {
         fetchSeasons();
-        fetchEvents();
+        fetchEvents(0);
         fetchSeasonInfo(0);
     }, []);
 
