@@ -403,7 +403,7 @@ export default function MainLobby() {
                         <Button sx={{marginTop: "6px"}}
                             variant="contained"
                             color="success">
-                                Release
+                                Release 2
                             </Button>
                         </Grid>
                     </Grid>
