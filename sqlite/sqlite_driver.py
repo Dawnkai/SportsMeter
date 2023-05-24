@@ -1,6 +1,8 @@
 from csv import reader
 import sqlite3
 
+from backend.exceptions import DatabaseUnavailableError, InvalidInputError, InvalidQueryError
+
 class SqliteDriver:
     def __init__(self, dbpath : str) -> None:
         self.dbpath = dbpath
@@ -36,7 +38,9 @@ class SqliteDriver:
                         )
                 conn.commit()
             except sqlite3.Error as error:
-                print(f"Sqlite error while adding data from file {filepath} : {error}")
+                raise InvalidQueryError(f"Sqlite error while adding data from file {filepath} : {error}")
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
     
     def add_mock_data(self, data_directory : str):
         self.insert_from_csv("Seasons", f"{data_directory}/seasons.csv", ";")
@@ -48,14 +52,17 @@ class SqliteDriver:
         allowed_fields = ["event_id", "event_title", "event_description"]
         for key in event_input.keys():
             if key not in allowed_fields:
-                return False
+                raise InvalidInputError(f"Illegal field in event data: {key}")
         return True
 
     def get_events(self):
         conn, cur = self.get_handle()
         rows = []
         if conn:
-            cur.execute("SELECT event_id, event_title, event_description FROM Events")
+            try:
+                cur.execute("SELECT event_id, event_title, event_description FROM Events")
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching events: {error}")
             rows = [
                 {
                     "event_id": entry[0],
@@ -65,6 +72,8 @@ class SqliteDriver:
             ]
             cur.close()
             conn.close()
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
         return rows
 
     def add_event(self, event_data : dict):
@@ -80,12 +89,16 @@ class SqliteDriver:
                 else:
                     insert_query += f"{value}, "
             insert_query = insert_query[:-2] + ")"
-            cur.execute(insert_query)
-            conn.commit()
+            try:
+                cur.execute(insert_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding event: {error}")
             cur.close()
             conn.close()
-            return True
-        return False
+            return True  
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
 
     def edit_event(self, event_id : int, event_data : dict):
         conn, cur = self.get_handle()
@@ -99,35 +112,46 @@ class SqliteDriver:
                 else:
                     update_query += f"{key} = {event_data[key]}, "
             update_query = update_query[:-2] + f" WHERE event_id = {event_id}"
-            cur.execute(update_query)
-            conn.commit()
+            try:
+                cur.execute(update_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while editing event: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
     
     def delete_event(self, event_id : int):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute(f"DELETE FROM Events WHERE event_id = {event_id}")
-            conn.commit()
+            try:
+                cur.execute(f"DELETE FROM Events WHERE event_id = {event_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting event: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
 
     def season_input_valid(self, season_input : dict):
         allowed_fields = ["season_id", "season_title", "season_start_date", "season_end_date"]
         for key in season_input.keys():
             if key not in allowed_fields:
-                return False
+                raise InvalidInputError(f"Illegal field in season data: {key}")
         return True
 
     def get_seasons(self):
         conn, cur = self.get_handle()
         rows = []
         if conn:
-            cur.execute("SELECT * FROM Seasons")
+            try:
+                cur.execute("SELECT * FROM Seasons")
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching seasons: {error}")
             rows = [
                 {
                     "season_id": entry[0],
@@ -138,6 +162,8 @@ class SqliteDriver:
             ]
             cur.close()
             conn.close()
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
         return rows
 
     def add_season(self, season_data : dict):
@@ -153,12 +179,16 @@ class SqliteDriver:
                 else:
                     insert_query += f"{value}, "
             insert_query = insert_query[:-2] + ")"
-            cur.execute(insert_query)
-            conn.commit()
+            try:
+                cur.execute(insert_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding new season: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
 
     def edit_season(self, season_id, season_data : dict):
         conn, cur = self.get_handle()
@@ -172,50 +202,66 @@ class SqliteDriver:
                 else:
                     update_query += f"{key} = {season_data[key]}, "
             update_query = update_query[:-2] + f" WHERE season_id = {season_id}"
-            cur.execute(update_query)
-            conn.commit()
+            try:
+                cur.execute(update_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while editing season: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
     
     def delete_season(self, season_id):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute(f"DELETE FROM Seasons WHERE season_id = {season_id}")
-            conn.commit()
+            try:
+                cur.execute(f"DELETE FROM Seasons WHERE season_id = {season_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting season: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
 
     def get_season_highscore(self, season_id : int):
         conn, cur = self.get_handle()
         rows = []
         if conn:
-            cur.execute((f"SELECT team_id, team_name, SUM(points) AS highscore FROM ("
-                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_a_points as points "
-                         f"FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_a_id"
-                         f" UNION ALL "
-                         f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_b_points as points "
-                         f"FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_b_id"
-                         f") GROUP BY team_name ORDER BY highscore DESC"))
+            try:
+                cur.execute((f"SELECT team_id, team_name, SUM(points) AS highscore FROM ("
+                            f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_a_points as points "
+                            f"FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_a_id"
+                            f" UNION ALL "
+                            f"SELECT t.team_id AS team_id, t.team_name as team_name, m.team_b_points as points "
+                            f"FROM Matches m, Teams t WHERE m.match_season = {season_id} AND t.team_id = m.team_b_id"
+                            f") GROUP BY team_name ORDER BY highscore DESC"))
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while getting season highscore: {error}")
             rows = [{"team_id": entry[0], "team_name": entry[1], "team_score": entry[2]} for entry in cur.fetchall()]
             cur.close()
             conn.close()
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
         return rows
 
     def team_input_valid(self, team_input : dict):
         allowed_fields = ["team_id", "team_name"]
         for key in team_input.keys():
             if key not in allowed_fields:
-                return False
+                raise InvalidInputError(f"Illegal filed in team data: {key}")
         return True
 
     def get_teams(self):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute("SELECT team_id, team_name FROM Teams")
+            try:
+                cur.execute("SELECT team_id, team_name FROM Teams")
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while getting teams: {error}")
             rows = [
                 {
                     "team_id": entry[0],
@@ -224,6 +270,8 @@ class SqliteDriver:
             ]
             cur.close()
             conn.close()
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
         return rows
     
     def add_team(self, team_data : dict):
@@ -239,12 +287,16 @@ class SqliteDriver:
                 else:
                     insert_query += f"{value}, "
             insert_query = insert_query[:-2] + ")"
-            cur.execute(insert_query)
-            conn.commit()
+            try:
+                cur.execute(insert_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding new team: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
     
     def edit_team(self, team_id : int, team_data : dict):
         conn, cur = self.get_handle()
@@ -258,35 +310,46 @@ class SqliteDriver:
                 else:
                     update_query += f"{key} = {team_data[key]}, "
             update_query = update_query[:-2] + f" WHERE team_id = {team_id}"
-            cur.execute(update_query)
-            conn.commit()
+            try:
+                cur.execute(update_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while editing team: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
     
     def delete_team(self, team_id : int):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute(f"DELETE FROM Teams WHERE team_id = {team_id}")
-            conn.commit()
+            try:
+                cur.execute(f"DELETE FROM Teams WHERE team_id = {team_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting team: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
 
     def match_input_valid(self, match_input : dict):
         allowed_fields = ["match_id", "match_date", "match_start_time", "match_end_time",
                           "match_season", "team_a_id", "team_b_id", "team_a_points", "team_b_points"]
         for key in match_input.keys():
             if key not in allowed_fields:
-                return False
+                raise InvalidInputError(f"Illegal field in match data: {key}")
         return True
 
     def get_matches(self):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute("SELECT * FROM Matches")
+            try:
+                cur.execute("SELECT * FROM Matches")
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while getting matches: {error}")
             rows = [
                 {
                     "match_id": entry[0],
@@ -302,17 +365,22 @@ class SqliteDriver:
             ]
             cur.close()
             conn.close()
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
         return rows
 
     def get_match(self, match_id : int):
         conn, cur = self.get_handle()
         result = {}
         if conn:
-            cur.execute(f"SELECT " 
-                        f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
-                        f"t2.team_name, m.team_a_points, m.team_b_points "
-                        f"FROM Matches m, Teams t1, Teams t2 "
-                        f"WHERE m.match_id = {match_id} AND m.team_a_id = t1.team_id AND m.team_b_id = t2.team_id")
+            try:
+                cur.execute(f"SELECT " 
+                            f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
+                            f"t2.team_name, m.team_a_points, m.team_b_points "
+                            f"FROM Matches m, Teams t1, Teams t2 "
+                            f"WHERE m.match_id = {match_id} AND m.team_a_id = t1.team_id AND m.team_b_id = t2.team_id")
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while getting a match: {error}")
             row = cur.fetchall()
             if len(row) > 0:
                 result = {
@@ -327,18 +395,23 @@ class SqliteDriver:
                     }
             cur.close()
             conn.close()
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
         return result
 
     def get_season_matches(self, season_id : int):
         conn, cur = self.get_handle()
         rows = []
         if conn:
-            cur.execute(f"SELECT " 
-                        f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
-                        f"t2.team_name, m.team_a_points, m.team_b_points "
-                        f"FROM Matches m, Teams t1, Teams t2 "
-                        f"WHERE m.match_season = {season_id} AND m.team_a_id = t1.team_id "
-                        f"AND m.team_b_id = t2.team_id")
+            try:
+                cur.execute(f"SELECT " 
+                            f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
+                            f"t2.team_name, m.team_a_points, m.team_b_points "
+                            f"FROM Matches m, Teams t1, Teams t2 "
+                            f"WHERE m.match_season = {season_id} AND m.team_a_id = t1.team_id "
+                            f"AND m.team_b_id = t2.team_id")
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while getting season matches: {error}")
             rows = [{
                 "match_id": entry[0],
                 "match_date": entry[1],
@@ -350,6 +423,8 @@ class SqliteDriver:
                 "team_b_points": entry[7]} for entry in cur.fetchall()]
             cur.close()
             conn.close()
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
         return rows
 
     def add_match(self, season_id : int, match_data : dict):
@@ -365,12 +440,16 @@ class SqliteDriver:
                 else:
                     insert_query += f"{value}, "
             insert_query = insert_query[:-2] + ")"
-            cur.execute(insert_query)
-            conn.commit()
+            try:
+                cur.execute(insert_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding new match: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
     
     def edit_match(self, match_id : int, new_data : dict):
         conn, cur = self.get_handle()
@@ -384,20 +463,28 @@ class SqliteDriver:
                 else:
                     update_query += f"{key} = {new_data[key]}, "
             update_query = update_query[:-2] + f" WHERE match_id = {match_id}"
-                
-            cur.execute(update_query)
-            conn.commit()
+            
+            try:
+                cur.execute(update_query)
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while editing match: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
     
     def delete_match(self, match_id : int):
         conn, cur = self.get_handle()
         if conn:
-            cur.execute(f"DELETE FROM Matches WHERE match_id = {match_id}")
-            conn.commit()
+            try:
+                cur.execute(f"DELETE FROM Matches WHERE match_id = {match_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting match: {error}")
             cur.close()
             conn.close()
             return True
-        return False
+        else:
+            raise DatabaseUnavailableError("Unable to connect to database!")
