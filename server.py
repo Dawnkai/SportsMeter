@@ -120,3 +120,18 @@ def team(team_id):
         return db.get_teams()
     db.delete_team(team_id)
     return jsonify({"msg": "Team deleted."}), 204
+
+@app.route("/api/substitutions", methods=["GET", "POST"])
+def substitutions():
+    if request.method == "POST":
+        db.add_substitution(request.json)
+    return db.get_substitutions()
+
+@app.route("/api/substitutions/<substitution_id>", method=["GET", "PUT", "DELETE"])
+def substitution(substitution_id):
+    if request.method == "DELETE":
+        db.delete_substitution(substitution_id)
+        return jsonify({"msg": "Substitution deleted."}), 204
+    if request.method == "PUT":
+        db.edit_substitution(request.json)
+    return db.get_substitutions(request.json), 200
