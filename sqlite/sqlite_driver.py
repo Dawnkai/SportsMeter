@@ -91,9 +91,9 @@ class SqliteDriver:
                 raise InvalidQueryError(f"Error while fetching events: {error}")
             rows = [
                 {
-                    "event_id": entry[0],
-                    "event_title": entry[1],
-                    "event_description": entry[2]
+                    "notifiaction_id": entry[0],
+                    "notifiaction_title": entry[1],
+                    "notifiaction_description": entry[2]
                 } for entry in cur.fetchall()
             ]
         return rows

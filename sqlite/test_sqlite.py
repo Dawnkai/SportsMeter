@@ -14,40 +14,40 @@ class TestSqlite:
         if path.exists("test.db"):
             remove("test.db")
 
-    def test_get_events(self, database):
-        database.insert_from_csv("Events", "test_input/events.csv", ";")
-        events = database.get_events()
-        with open("test_output/events.json", encoding="utf-8") as events_results:
-            expected_result = json.load(events_results)
-            assert events == expected_result
+    def test_get_notifiactions(self, database):
+        database.insert_from_csv("Notifiactions", "test_input/notifiactions.csv", ";")
+        notifiactions = database.get_notifiactions()
+        with open("test_output/notifiactions.json", encoding="utf-8") as notifiactions_results:
+            expected_result = json.load(notifiactions_results)
+            assert notifiactions == expected_result
 
-    def test_add_event(self, database):
-        database.add_event(
+    def test_add_notifiaction(self, database):
+        database.add_notifiaction(
             {
-                "event_title": "test_event",
-                "event_description": ""
+                "notifiaction_title": "test_notifiaction",
+                "notifiaction_description": ""
             }
         )
-        events = database.get_events()
-        assert events == [
+        notifiactions = database.get_notifiactions()
+        assert notifiactions == [
             {
-                "event_id": 1,
-                "event_title": "test_event",
-                "event_description": ""
+                "notifiaction_id": 1,
+                "notifiaction_title": "test_notifiaction",
+                "notifiaction_description": ""
             }
         ]
 
-    def test_edit_event(self, database):
-        database.insert_from_csv("Events", "test_input/events.csv", ";")
-        database.edit_event(0, {"event_title" : "edited title"})
-        events = database.get_events()
-        assert events[0]["event_title"] == "edited title"
+    def test_edit_notifiaction(self, database):
+        database.insert_from_csv("Notifiactions", "test_input/notifiactions.csv", ";")
+        database.edit_notifiaction(0, {"notifiaction_title" : "edited title"})
+        notifiactions = database.get_notifiactions()
+        assert notifiactions[0]["notifiaction_title"] == "edited title"
     
-    def test_delete_event(self, database):
-        database.insert_from_csv("Events", "test_input/events.csv", ";")
-        database.delete_event(0)
-        events = database.get_events()
-        assert len(events) == 3 and events[0]["event_id"] != 0
+    def test_delete_notifiaction(self, database):
+        database.insert_from_csv("Notifiactions", "test_input/notifiactions.csv", ";")
+        database.delete_notifiaction(0)
+        notifiactions = database.get_notifiactions()
+        assert len(notifiactions) == 3 and notifiactions[0]["notifiaction_id"] != 0
 
     def test_wrong_event_fields(self, database):
         with pytest.raises(InvalidInputError):

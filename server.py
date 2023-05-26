@@ -72,20 +72,20 @@ def season_highscore(season_id):
     return db.get_season_highscore(season_id)
 
 @throws_exception
-@app.route("/api/events", methods=["GET", "POST"])
-def events():
+@app.route("/api/notifications", methods=["GET", "POST"])
+def notifications():
     if request.method == "POST":
-        db.add_event(request.json)
-    return db.get_events()
+        db.add_notifiaction(request.json)
+    return db.get_notifiactions()
 
 @throws_exception
-@app.route("/api/events/<event_id>", methods=["PUT", "DELETE"])
-def event(event_id):
+@app.route("/api/notifications/<notification_id>", methods=["PUT", "DELETE"])
+def notification(notification_id):
     if request.method == "PUT":
-        db.edit_event(event_id, request.json)
-        return db.get_events()
-    db.delete_event(event_id)
-    return jsonify({"msg": "Event deleted"}), 204
+        db.edit_notifiaction(notification_id, request.json)
+        return db.get_notifiactions()
+    db.delete_notifiaction(notification_id)
+    return jsonify({"msg": "Notifiaction deleted"}), 204
 
 @throws_exception
 @app.route("/api/matches/", methods=["GET"])
