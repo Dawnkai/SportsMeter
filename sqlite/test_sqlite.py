@@ -3,7 +3,7 @@ import pytest
 
 from os import path, remove
 from .sqlite_driver import SqliteDriver
-from backend.exceptions import InvalidInputError
+from backend.exceptions import InvalidInputError, NoResultError
 
 class TestSqlite:
     @pytest.fixture
@@ -14,47 +14,47 @@ class TestSqlite:
         if path.exists("test.db"):
             remove("test.db")
 
-    def test_get_notifiactions(self, database):
-        database.insert_from_csv("Notifiactions", "test_input/notifiactions.csv", ";")
-        notifiactions = database.get_notifiactions()
-        with open("test_output/notifiactions.json", encoding="utf-8") as notifiactions_results:
-            expected_result = json.load(notifiactions_results)
-            assert notifiactions == expected_result
+    def test_get_notifications(self, database):
+        database.insert_from_csv("Notifications", "test_input/notifications.csv", ";")
+        notifications = database.get_notifications()
+        with open("test_output/notifications.json", encoding="utf-8") as notifications_results:
+            expected_result = json.load(notifications_results)
+            assert notifications == expected_result
 
-    def test_add_notifiaction(self, database):
-        database.add_notifiaction(
+    def test_add_notification(self, database):
+        database.add_notification(
             {
-                "notifiaction_title": "test_notifiaction",
-                "notifiaction_description": ""
+                "notification_title": "test_notification",
+                "notification_description": ""
             }
         )
-        notifiactions = database.get_notifiactions()
-        assert notifiactions == [
+        notifications = database.get_notifications()
+        assert notifications == [
             {
-                "notifiaction_id": 1,
-                "notifiaction_title": "test_notifiaction",
-                "notifiaction_description": ""
+                "notification_id": 1,
+                "notification_title": "test_notification",
+                "notification_description": ""
             }
         ]
 
-    def test_edit_notifiaction(self, database):
-        database.insert_from_csv("Notifiactions", "test_input/notifiactions.csv", ";")
-        database.edit_notifiaction(0, {"notifiaction_title" : "edited title"})
-        notifiactions = database.get_notifiactions()
-        assert notifiactions[0]["notifiaction_title"] == "edited title"
+    def test_edit_notification(self, database):
+        database.insert_from_csv("Notifications", "test_input/notifications.csv", ";")
+        database.edit_notification(0, {"notification_title" : "edited title"})
+        notifications = database.get_notifications()
+        assert notifications[0]["notification_title"] == "edited title"
     
-    def test_delete_notifiaction(self, database):
-        database.insert_from_csv("Notifiactions", "test_input/notifiactions.csv", ";")
-        database.delete_notifiaction(0)
-        notifiactions = database.get_notifiactions()
-        assert len(notifiactions) == 3 and notifiactions[0]["notifiaction_id"] != 0
+    def test_delete_notification(self, database):
+        database.insert_from_csv("Notifications", "test_input/notifications.csv", ";")
+        database.delete_notification(0)
+        notifications = database.get_notifications()
+        assert len(notifications) == 3 and notifications[0]["notification_id"] != 0
 
-    def test_wrong_event_fields(self, database):
+    def test_wrong_notification_fields(self, database):
         with pytest.raises(InvalidInputError):
-            database.add_event(
+            database.add_notification(
                 {
-                    "event_title": "wrong_event",
-                    "event_description": "",
+                    "notification_title": "wrong_notification",
+                    "notification_description": "",
                     "illegal_field": "value"
                 }
             )
@@ -267,3 +267,67 @@ class TestSqlite:
         database.delete_match(0)
         matches = database.get_matches()
         assert matches[0]["match_id"] != 0
+    
+    def test_get_players(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        players = database.get_players()
+        with open("test_output/players.json", encoding="utf-8") as players_results:
+            expected_result = json.load(players_results)
+            assert players == expected_result
+    
+    def test_get_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        player = database.get_player(1)
+        assert player["player_id"] == 1
+
+    def test_add_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.add_player({
+            "player_name": "Test Name",
+            "player_gender": "Male",
+            "player_team": 0
+        })
+        player = database.get_player(1)
+        assert player == {
+            "player_id": 1,
+            "player_name": "Test Name",
+            "player_gender": "Male",
+            "player_team": "Poznań Capricorns"
+        }
+    
+    def test_wrong_player_fields(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_player({
+                "player_name": "Test Name",
+                "player_gender": "Male",
+                "player_team": 0,
+                "illegal_field": ""
+            })
+
+    def test_edit_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.edit_player(1, {"player_name" : "Edited Name"})
+        match = database.get_player(1)
+        assert match["player_name"] == "Edited Name"
+    
+    def test_get_empty_player(self, database):
+        with pytest.raises(NoResultError):
+            database.get_player(0)
+
+    def test_delete_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.delete_player(1)
+        with pytest.raises(NoResultError):
+            database.get_player(1)
+    
+    def test_wrong_gender(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_player({
+                "player_name": "Test Name",
+                "player_gender": "some gender",
+                "player_team": 0
+            })

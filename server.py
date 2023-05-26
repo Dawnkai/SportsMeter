@@ -2,7 +2,7 @@ from flask import jsonify, Flask, request
 from flask_jwt_extended import create_access_token, JWTManager
 
 from sqlite.sqlite_driver import SqliteDriver
-from backend.exceptions import DatabaseUnavailableError, InvalidInputError, InvalidQueryError
+from backend.exceptions import DatabaseUnavailableError, InvalidInputError, InvalidQueryError, NoResultError
 
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
@@ -19,6 +19,8 @@ def throws_exception(func):
             return jsonify({"msg": err}), 401
         except InvalidQueryError:
             return jsonify({"msg": "Backend error. Check logs."}), 503
+        except NoResultError as err:
+            return jsonify({"msg": err}), 404
     return wrapper
 
 @throws_exception
@@ -127,11 +129,26 @@ def substitutions():
         db.add_substitution(request.json)
     return db.get_substitutions()
 
-@app.route("/api/substitutions/<substitution_id>", method=["GET", "PUT", "DELETE"])
+@app.route("/api/substitutions/<substitution_id>", methods=["GET", "PUT", "DELETE"])
 def substitution(substitution_id):
     if request.method == "DELETE":
         db.delete_substitution(substitution_id)
         return jsonify({"msg": "Substitution deleted."}), 204
     if request.method == "PUT":
-        db.edit_substitution(request.json)
-    return db.get_substitutions(request.json), 200
+        db.edit_substitution(substitution_id, request.json)
+    return db.get_substitution(substitution_id, request.json), 200
+
+@app.route("/api/players", methods=["GET", "POST"])
+def players():
+    if request.method == "POST":
+        db.add_player(request.json)
+    return db.get_players()
+
+@app.route("/api/players/<player_id>", methods=["GET", "PUT", "DELETE"])
+def player(player_id):
+    if request.method == "DELETE":
+        db.delete_player(player_id)
+        return jsonify({"msg": "Player deleted."})
+    if request.method == "PUT":
+        db.edit_player(player_id, request.json)
+    return db.get_player(player_id)

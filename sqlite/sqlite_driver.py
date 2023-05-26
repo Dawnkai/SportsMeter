@@ -1,13 +1,14 @@
 from csv import reader
 import sqlite3
 
-from backend.exceptions import DatabaseUnavailableError, InvalidInputError, InvalidQueryError
+from backend.exceptions import DatabaseUnavailableError, InvalidInputError, InvalidQueryError, NoResultError
 
-EVENT_FIELDS = ["event_id", "event_title", "event_description"]
+NOTIFICATION_FIELDS = ["notification_id", "notification_title", "notification_description"]
 MATCH_FIELDS = ["match_id", "match_date", "match_start_time", "match_end_time",
                 "match_season", "team_a_id", "team_b_id", "team_a_points", "team_b_points"]
 SEASON_FIELDS = ["season_id", "season_title", "season_start_date", "season_end_date"]
 TEAM_FIELDS = ["team_id", "team_name"]
+PLAYER_FIELDS = ["player_id", "player_name", "player_gender", "player_team"]
 
 class SqliteContext:
     def __init__(self, dbpath : str) -> None:
@@ -56,7 +57,7 @@ class SqliteDriver:
         self.insert_from_csv("Seasons", f"{data_directory}/seasons.csv", ";")
         self.insert_from_csv("Teams", f"{data_directory}/teams.csv", ";")
         self.insert_from_csv("Matches", f"{data_directory}/matches.csv", ";")
-        self.insert_from_csv("Events", f"{data_directory}/events.csv", ";")
+        self.insert_from_csv("Notifications", f"{data_directory}/notifications.csv", ";")
     
     def get_insert_query(self, table : str, data : dict):
         insert_query = f"INSERT INTO {table} ("
@@ -82,54 +83,55 @@ class SqliteDriver:
                 raise InvalidInputError(f"Illegal field in input data: {key}")
         return True
 
-    def get_events(self):
+    def get_notifications(self):
         rows = []
         with SqliteContext(self.dbpath) as [conn, cur]:
             try:
-                cur.execute("SELECT event_id, event_title, event_description FROM Events")
+                cur.execute("SELECT notification_id, notification_title, notification_description FROM Notifications")
             except sqlite3.Error as error:
-                raise InvalidQueryError(f"Error while fetching events: {error}")
+                raise InvalidQueryError(f"Error while fetching notifications: {error}")
             rows = [
                 {
-                    "notifiaction_id": entry[0],
-                    "notifiaction_title": entry[1],
-                    "notifiaction_description": entry[2]
+                    "notification_id": entry[0],
+                    "notification_title": entry[1],
+                    "notification_description": entry[2]
                 } for entry in cur.fetchall()
             ]
         return rows
 
-    def add_event(self, event_data : dict):
+    def add_notification(self, notification_data : dict):
         with SqliteContext(self.dbpath) as [conn, cur]:
-            if self.input_valid(EVENT_FIELDS, event_data):
+            if self.input_valid(NOTIFICATION_FIELDS, notification_data):
                 try:
-                    cur.execute(self.get_insert_query("Events", event_data))
+                    cur.execute(self.get_insert_query("Notifications", notification_data))
                     conn.commit()
                 except sqlite3.Error as error:
-                    raise InvalidQueryError(f"Error while adding event: {error}")
+                    raise InvalidQueryError(f"Error while adding notification: {error}")
                 return True 
         return False
 
-    def edit_event(self, event_id : int, event_data : dict):
+    def edit_notification(self, notification_id : int, notification_data : dict):
         with SqliteContext(self.dbpath) as [conn, cur]:
-            if self.input_valid(EVENT_FIELDS, event_data):
-                if "event_id" in event_data:
-                    del event_data["event_id"]
+            if self.input_valid(NOTIFICATION_FIELDS, notification_data):
+                if "notification_id" in notification_data:
+                    del notification_data["notification_id"]
                 try:
-                    cur.execute(self.get_update_query("Events", event_data, "event_id", event_id))
+                    cur.execute(self.get_update_query("Notifications", notification_data,
+                                                      "notification_id", notification_id))
                     conn.commit()
                 except sqlite3.Error as error:
-                    raise InvalidQueryError(f"Error while editing event: {error}")
+                    raise InvalidQueryError(f"Error while editing notification: {error}")
                 return True
         return False
     
-    def delete_event(self, event_id : int):
+    def delete_notification(self, notification_id : int):
         with SqliteContext(self.dbpath) as [conn, cur]:
             try:
-                cur.execute(f"DELETE FROM Events WHERE event_id = {event_id}")
+                cur.execute(f"DELETE FROM Notifications WHERE notification_id = {notification_id}")
                 conn.commit()
                 return True
             except sqlite3.Error as error:
-                raise InvalidQueryError(f"Error while deleting event: {error}")
+                raise InvalidQueryError(f"Error while deleting notification: {error}")
 
     def get_seasons(self):
         rows = []
@@ -347,4 +349,79 @@ class SqliteDriver:
                 conn.commit()
             except sqlite3.Error as error:
                 raise InvalidQueryError(f"Error while deleting match: {error}")
+            return True
+
+    def get_players(self):
+        rows = []
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute("SELECT p.player_id, p.player_name, p.player_gender, t.team_name FROM Players p,"
+                            " Teams t WHERE p.player_team = t.team_id")
+                rows = [{
+                    "player_id": entry[0],
+                    "player_name": entry[1],
+                    "player_gender": entry[2],
+                    "player_team": entry[3]
+                    } for entry in cur.fetchall()
+                ]
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching players: {error}")
+        return rows
+
+    def get_player(self, player_id : int):
+        response = {}
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT p.player_id, p.player_name, p.player_gender, t.team_name FROM Players p, "
+                            f"Teams t WHERE p.player_team = t.team_id AND p.player_id = {player_id}")
+                row = cur.fetchall()
+                response = {
+                    "player_id": row[0][0],
+                    "player_name": row[0][1],
+                    "player_gender": row[0][2],
+                    "player_team": row[0][3]
+                }
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching player: {error}")
+            except IndexError:
+                raise NoResultError(f"Player {player_id} does not exist.")
+        return response
+
+    def add_player(self, player_data : dict):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            if self.input_valid(PLAYER_FIELDS, player_data):
+                if "player_gender" in player_data:
+                    if player_data["player_gender"] not in ["Male", "Female", "Nonbinary"]:
+                        raise InvalidInputError("Not allowed gender provided.")
+                try:
+                    cur.execute(self.get_insert_query("Players", player_data))
+                    conn.commit()
+                except sqlite3.Error as error:
+                    raise InvalidQueryError(f"Error while adding new player: {error}")
+                return True
+        return False
+    
+    def edit_player(self, player_id : int, player_data : dict):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            if self.input_valid(PLAYER_FIELDS, player_data):
+                if "player_id" in player_data:
+                    del player_data["player_id"]
+                if "gender" in player_data:
+                    if player_data["gender"] not in ["Male", "Female", "Nonbinary"]:
+                        raise InvalidInputError("Not allowed gender provided.")
+                try:
+                    cur.execute(self.get_update_query("Players", player_data, "player_id", player_id))
+                    conn.commit()
+                except sqlite3.Error as error:
+                    raise InvalidQueryError(f"Error while editing player: {error}")
+                return True
+        return False
+
+    def delete_player(self, player_id : int):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"DELETE FROM Players WHERE player_id = {player_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting player: {error}")
             return True

@@ -34,18 +34,3 @@ CREATE TABLE IF NOT EXISTS Players (
     player_gender TEXT NOT NULL,
     player_team INTEGER REFERENCES Teams(team_id) NULL
 );
-
-CREATE TABLE IF NOT EXISTS Substitutions (
-    substitution_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    substituted_player INTEGER REFERENCES Players(player_id) NOT NULL,
-    substituting_player INTEGER REFERENCES Players(played_id) NULL,
-    substitution_match INTEGER REFERENCES Matches(match_id) NULL,
-    substitution_time TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS Events (
-    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_name TEXT NOT NULL,
-    event_date TEXT NOT NULL,
-    event_time TEXT NOT NULL
-)
