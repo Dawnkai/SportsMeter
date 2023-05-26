@@ -10,6 +10,7 @@ import MainPage from './components/MainPage/MainPage';
 import MatchDetails from './components/MatchDetails/MatchDetails';
 import NavigationBar from './components/NavigationBar';
 import MainLobby from './components/MatchLobby/MainLobby';
+//import LobbySetup from './components/MatchLobby/LobbySetup';
 //import SignInPage from './components/Login/SignInPage';
 //import SignUpPage from './components/Login/SignUpPage';
 

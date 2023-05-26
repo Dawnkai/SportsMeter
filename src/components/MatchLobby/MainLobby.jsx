@@ -23,6 +23,16 @@ import SportsGolf from '@mui/icons-material/SportsGolf';
 import AddCircle from '@mui/icons-material/AddCircle';
 import RemoveCircle from '@mui/icons-material/RemoveCircle';
 import InsertDriveFile from '@mui/icons-material/InsertDriveFile';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import Cancel from '@mui/icons-material/Cancel';
+
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+import MenuItem from '@mui/material/MenuItem';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+
+import Popper from '@mui/material/Popper';
+import Fade from '@mui/material/Fade';
 
 import { styled } from '@mui/material/styles';
 import Table from '@mui/material/Table';
@@ -53,6 +63,33 @@ export default function MainLobby() {
     const [team_a_score, setTeam_a_score] = useState(0); //add if statement for <0
     const [team_b_score, setTeam_b_score] = useState(0);
 
+    // List to select players
+    const [sub, setSub] = React.useState('');
+    const [subFor, setSubFor] = React.useState('');
+
+    const handleSub = (event) => {
+        setSub(event.target.value);
+    };
+    const handleSubFor = (event) => {
+        setSubFor(event.target.value);
+    };
+
+    //Popper for statistics
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [open, setOpen] = useState(false);
+    const [placement, setPlacement] = useState();
+
+    const handlePopperClick = (newPlacement) => (event) => {
+
+        setAnchorEl(event.currentTarget);
+        setOpen((prev) => placement !== newPlacement || !prev);
+        setPlacement(newPlacement);
+    }
+
+    const handlePopperClose = (event) => {
+        setAnchorEl(null);
+    }
+
     const SnitchCatch = (team_snitch) => {
         if (team_snitch == "a") {
             setTeam_a_score((prevTeam_a_score) => prevTeam_a_score + 30);
@@ -74,17 +111,17 @@ export default function MainLobby() {
     */
 
     /* DATA FOR STATISTICS: */
-    function createData(number, name, shots, passes, tackles, defenses, turnovers, beats, catches) {
-        return { number, name, shots, passes, tackles, defenses, turnovers, beats, catches };
+    function createData(number, name, gender, shotsSuc, shots, passesSuc, passes, tacklesSuc, tackles, defensesSuc, defenses, turnoversSuc, turnovers, beatsSuc, beats, catchesSuc, catches) {
+        return { number, name, gender, shotsSuc, shots, passesSuc, passes, tacklesSuc, tackles, defensesSuc, defenses, turnoversSuc, turnovers, beatsSuc, beats, catchesSuc, catches };
     }
 
     const rows = [
-        createData(12, 'Jan Nowak', 0, 0, 0, 0, 0, 0, 0),
-        createData(5, 'Joanna Kowalska', 0, 0, 0, 0, 0, 0, 0),
-        createData(2, 'Marcin Cośtam', 0, 0, 0, 0, 0, 0, 0),
-        createData(5, 'Michał Darkowski', 0, 0, 0, 0, 0, 0, 0),
-        createData(22, 'Anna Mowrońska', 0, 0, 0, 0, 0, 0, 0),
-        createData(42, 'Aleksandra Mostewska', 0, 0, 0, 0, 0, 0, 0),
+        createData(12, 'Jan Nowak', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        createData(5, 'Joanna Kowalska', 'K', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        createData(2, 'Marcin Cośtam', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        createData(5, 'Michał Darkowski', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        createData(22, 'Anna Mowrońska', 'NB', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        createData(42, 'Aleksandra Mostewska', 'K', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     ];
 
 
@@ -108,6 +145,44 @@ export default function MainLobby() {
             >
                 {children}
             </Box>
+        );
+    }
+
+    const ButtonAction = ({ children }) => {
+        return (
+            <>
+
+                <Popper
+                    open={open}
+                    anchorEl={anchorEl}
+                    placement={placement}
+                    modifiers={[
+                        {
+                            name: 'offset',
+                            options: {
+                                offset: [0, 8], // Adjust the offset values if needed
+                            },
+                        },
+                    ]}
+                    transition
+                    onClose={handlePopperClose}
+                >
+                    <Paper>
+                        <IconButton
+                            aria-label="fail" sx={{ backgroundColor: 'red', m: 2, '&:hover': { backGroundColor: 'darkRed', }, }}>
+                            <Cancel />
+                        </IconButton>
+                        <IconButton
+                            aria-label="success" sx={{ backgroundColor: 'green', m: 2, '&:hover': { backGroundColor: 'darkGreen', }, }}>
+                            <CheckCircle />
+                        </IconButton>
+                    </Paper>
+                </Popper>
+                <Button onClick={handlePopperClick('top')} variant="outlined">
+                    {children}
+                </Button>
+
+            </>
         );
     }
 
@@ -214,7 +289,9 @@ export default function MainLobby() {
                                         </IconButton>
                                     </ListItem>
                                     <ListItem>
-                                        <IconButton onClick={() => setTeam_a_score((prevTeam_a_score) => prevTeam_a_score - 10)}
+                                        <IconButton onClick={() => {
+                                            if (team_a_score != 0) { setTeam_a_score((prevTeam_a_score) => prevTeam_a_score - 10) }
+                                        }}
                                             aria-label="remove_points_A"
                                             sx={{ backgroundColor: 'red', m: 1, '&:hover': { backGroundColor: 'darkRed', }, }}>
                                             <RemoveCircle />
@@ -237,7 +314,9 @@ export default function MainLobby() {
                                         </IconButton>
                                     </ListItem>
                                     <ListItem>
-                                        <IconButton onClick={() => setTeam_b_score((prevTeam_b_score) => prevTeam_b_score - 10)}
+                                        <IconButton onClick={() => {
+                                            if (team_b_score != 0) { setTeam_b_score((prevTeam_b_score) => prevTeam_b_score - 10) }
+                                        }}
                                             aria-label="remove_points_A"
                                             sx={{ backgroundColor: 'red', m: 1, '&:hover': { backGroundColor: 'darkRed', }, }}>
                                             <RemoveCircle />
@@ -265,7 +344,7 @@ export default function MainLobby() {
 
             {/************************************************** Timer ***************************************************************/}
             <BorderBox>
-                {/*<StopWatch/>*/}
+                <Stopwatch />
             </BorderBox>
 
             {/*********************************************** Statistics ***********************************************************************/}
@@ -275,13 +354,13 @@ export default function MainLobby() {
                         <TableHead>
                             <TableRow>
                                 <TableCell>Name</TableCell>
-                                <TableCell align="right">Shots</TableCell>
-                                <TableCell align="right">Passes</TableCell>
-                                <TableCell align="right">Tackles</TableCell>
-                                <TableCell align="right">Defenses</TableCell>
-                                <TableCell align="right">Turnovers</TableCell>
-                                <TableCell align="right">Beats</TableCell>
-                                <TableCell align="right">Catches</TableCell>
+                                <TableCell align="center">Shots</TableCell>
+                                <TableCell align="center">Passes</TableCell>
+                                <TableCell align="center">Tackles</TableCell>
+                                <TableCell align="center">Defenses</TableCell>
+                                <TableCell align="center">Turnovers</TableCell>
+                                <TableCell align="center">Beats</TableCell>
+                                <TableCell align="center">Catches</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -294,14 +373,58 @@ export default function MainLobby() {
                                         {row.number}
                                         {" | "}
                                         {row.name}
+                                        {" | "}
+                                        {row.gender}
                                     </TableCell>
-                                    <TableCell align="right">{row.shots}</TableCell>
-                                    <TableCell align="right">{row.passes}</TableCell>
-                                    <TableCell align="right">{row.tackles}</TableCell>
-                                    <TableCell align="right">{row.defenses}</TableCell>
-                                    <TableCell align="right">{row.turnovers}</TableCell>
-                                    <TableCell align="right">{row.beats}</TableCell>
-                                    <TableCell align="right">{row.catches}</TableCell>
+                                    <TableCell align="center">
+                                        <ButtonAction>
+                                            {row.shotsSuc}
+                                            {" / "}
+                                            {row.shots}
+                                        </ButtonAction>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <ButtonAction>
+                                            {row.passesSuc}
+                                            {" / "}
+                                            {row.passes}
+                                        </ButtonAction>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <ButtonAction>
+                                            {row.tacklesSuc}
+                                            {" / "}
+                                            {row.tackles}
+                                        </ButtonAction>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <ButtonAction>
+                                            {row.defensesSuc}
+                                            {" / "}
+                                            {row.defenses}
+                                        </ButtonAction>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <ButtonAction>
+                                            {row.turnoversSuc}
+                                            {" / "}
+                                            {row.turnovers}
+                                        </ButtonAction>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <ButtonAction>
+                                            {row.beatsSuc}
+                                            {" / "}
+                                            {row.beats}
+                                        </ButtonAction>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <ButtonAction>
+                                            {row.catchesSuc}
+                                            {" / "}
+                                            {row.catches}
+                                        </ButtonAction>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -313,100 +436,143 @@ export default function MainLobby() {
                 {/********************************************* Plan substitutions ************************************************************/}
                 <Grid item xs={6}>
                     <BorderBox>
-                    <Grid container spacing={2} m={0} sx={{display: 'flex', alignItems: 'center'}}>
-                        <Grid item xs={3}>
-                            Plan Substitutions:
+                        <Grid container spacing={2} m={0} sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Grid item xs={3}>
+                                Plan Substitutions:
+                            </Grid>
+                            <Grid item xs={4} sx={{ padding: '10px' }}>
+                                <Button
+                                    variant="contained"
+                                    color="success">
+                                    Execute
+                                </Button>
+                            </Grid>
+                            <Grid item xs={4} sx={{ textAlign: 'right', fontSize: 12, color: 'red' }}>
+                                Warning
+                            </Grid>
                         </Grid>
-                        <Grid item xs={4} sx={{padding: '10px'}}>
-                            <Button
-                            variant="contained"
-                            color="success">
-                                Execute
-                            </Button>
+                        <Divider />
+                        <Grid container spacing={4} sx={{ paddingLeft: "16px" }}>
+                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                                Player 1
+                            </Grid>
+                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                                -
+                            </Grid>
+                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                                Player 2
+                            </Grid>
+                            <Grid item xs={3}>
+                                <Button sx={{ color: 'blue', fontSize: 10 }}>
+                                    cancel substitution
+                                </Button>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={4} sx={{ textAlign: 'right', fontSize: 12, color: 'red'}}>
-                            Warning
+                        <Grid container spacing={4} sx={{ paddingLeft: "16px" }}>
+                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                                Player 5
+                            </Grid>
+                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                                -
+                            </Grid>
+                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                                Player 6
+                            </Grid>
+                            <Grid item xs={3}>
+                                <Button sx={{ color: 'blue', fontSize: 10 }}>
+                                    cancel substitution
+                                </Button>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                    <Divider/>
-                    <Grid container spacing={3} sx={{paddingLeft: "16px"}}>
-                        <Grid item xs={3}>
-                            Player 1
+                        <Divider />
+                        <Grid container spacing={2} m={0}>
+                            <Grid item xs={4}>
+                                <Box sx={{ minWidth: 80 }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="demo-simple-select-label">Substitution</InputLabel>
+                                        <Select
+                                            labelId="demo-simple-select-label"
+                                            id="demo-simple-select"
+                                            value={sub}
+                                            label="Substitution"
+                                            onChange={handleSub}
+                                        >
+                                            <MenuItem value={10}>Player 1</MenuItem>
+                                            <MenuItem value={20}>Player 2</MenuItem>
+                                            <MenuItem value={30}>Player 3</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                                </Grid>
+                                <Grid item xs={4}>
+                                <Box sx={{ minWidth: 80 }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="demo-simple-select-label2">Player</InputLabel>
+                                        <Select
+                                            labelId="demo-simple-select-label2"
+                                            id="demo-simple-select2"
+                                            value={subFor}
+                                            label="Player"
+                                            onChange={handleSubFor}
+                                        >
+                                            <MenuItem value={10}>Player 5</MenuItem>
+                                            <MenuItem value={20}>Player 6</MenuItem>
+                                            <MenuItem value={30}>Player 7</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={4} sx={{ display: 'flex', justifyContent: 'right', paddingRight: '76px' }}>
+                                <Button
+                                    variant="contained"
+                                    color="success">
+                                    New Substitution
+                                </Button>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={3}>
-                            -
-                        </Grid>
-                        <Grid item xs={3}>
-                            Player 2
-                        </Grid>
-                    </Grid>
-                    <Grid container spacing={3} sx={{paddingLeft: "16px"}}>
-                        <Grid item xs={3}>
-                            Player 5
-                        </Grid>
-                        <Grid item xs={3}>
-                            -
-                        </Grid>
-                        <Grid item xs={3}>
-                            Player 6
-                        </Grid>
-                    </Grid>
-                    <Divider/>
-                    <Grid container spacing={2} m={0}>
-                        <Grid item xs={8}>
-                            
-                        </Grid>
-                        <Grid item xs={4}>
-                        <Button
-                            variant="contained"
-                            color="success">
-                                New Substitution
-                            </Button>
-                        </Grid>
-                    </Grid>
                     </BorderBox>
                 </Grid>
                 {/********************************************* Add cards ************************************************************/}
                 <Grid item xs={6}>
-                <BorderBox>
-                    <Grid container spacing={2} m={0} sx={{display: 'flex', alignItems: 'center'}}>
-                        <Grid item xs={3}>
-                            Add cards:
+                    <BorderBox>
+                        <Grid container spacing={2} m={0} sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Grid item xs={3}>
+                                Add cards:
+                            </Grid>
+                            <Grid item xs={3}>
+                                <IconButton
+                                    aria-label="blue_card"
+                                    sx={{ backgroundColor: 'lightblue', m: 1, '&:hover': { backGroundColor: 'Blue', }, }}>
+                                    <InsertDriveFile />
+                                </IconButton>
+                                <IconButton
+                                    aria-label="yellow_card"
+                                    sx={{ backgroundColor: 'yellow', m: 1, '&:hover': { backGroundColor: 'darkYellow', }, }}>
+                                    <InsertDriveFile />
+                                </IconButton>
+                                <IconButton
+                                    aria-label="red_card"
+                                    sx={{ backgroundColor: 'red', m: 1, '&:hover': { backGroundColor: 'darkRed', }, }}>
+                                    <InsertDriveFile />
+                                </IconButton>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={3}>
-                            <IconButton 
-                                            aria-label="blue_card"
-                                            sx={{ backgroundColor: 'lightblue', m: 1, '&:hover': { backGroundColor: 'Blue', }, }}>
-                                            <InsertDriveFile/>
-                            </IconButton>
-                            <IconButton 
-                                            aria-label="yellow_card"
-                                            sx={{ backgroundColor: 'yellow', m: 1, '&:hover': { backGroundColor: 'darkYellow', }, }}>
-                                            <InsertDriveFile/>
-                            </IconButton>
-                            <IconButton 
-                                            aria-label="red_card"
-                                            sx={{ backgroundColor: 'red', m: 1, '&:hover': { backGroundColor: 'darkRed', }, }}>
-                                            <InsertDriveFile/>
-                            </IconButton>
+                        <Divider />
+                        <Grid container spacing={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Grid item xs={6} sx={{ marginLeft: "16px" }}>
+                                Player 3
+                            </Grid>
+                            <Grid item xs={2}>
+                                00:23
+                            </Grid>
+                            <Grid item xs={2} sx={{ padding: "6px" }}>
+                                <Button sx={{ marginTop: "6px" }}
+                                    variant="contained"
+                                    color="success">
+                                    Release
+                                </Button>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                    <Divider/>
-                    <Grid container spacing={3} sx={{display: 'flex', alignItems: 'center'}}>
-                        <Grid item xs={6} sx={{marginLeft: "16px"}}>
-                            Player 3
-                        </Grid>
-                        <Grid item xs={2}>
-                            00:23
-                        </Grid>
-                        <Grid item xs={2} sx={{padding: "6px"}}>
-                        <Button sx={{marginTop: "6px"}}
-                            variant="contained"
-                            color="success">
-                                Release 2
-                            </Button>
-                        </Grid>
-                    </Grid>
                     </BorderBox>
                 </Grid>
             </Grid>
