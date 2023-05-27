@@ -3,6 +3,7 @@ import pytest
 
 from os import path, remove
 from .sqlite_driver import SqliteDriver
+from backend.exceptions import InvalidInputError
 
 class TestSqlite:
     @pytest.fixture
@@ -48,6 +49,16 @@ class TestSqlite:
         events = database.get_events()
         assert len(events) == 3 and events[0]["event_id"] != 0
 
+    def test_wrong_event_fields(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_event(
+                {
+                    "event_title": "wrong_event",
+                    "event_description": "",
+                    "illegal_field": "value"
+                }
+            )
+
     def test_get_seasons(self, database):
         database.insert_from_csv("Seasons", "test_input/seasons.csv", ";")
         seasons = database.get_seasons()
@@ -82,6 +93,17 @@ class TestSqlite:
         database.delete_season(1)
         seasons = database.get_seasons()
         assert len(seasons) == 1 and seasons[0]["season_id"] == 0
+
+    def test_wrong_season_fields(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_season(
+                {
+                    "season_title": "test",
+                    "season_start_date": "19990101",
+                    "season_end_date": "19990110",
+                    "illegal_field": "some value"
+                }
+            )
 
     def test_get_season_highscore(self, database):
         database.insert_from_csv("Seasons", "test_input/seasons.csv", ";")
@@ -129,6 +151,10 @@ class TestSqlite:
         database.delete_team(0)
         teams = database.get_teams()
         assert len(teams) == 8 and teams[0]["team_id"] != 0
+
+    def test_wrong_team_data(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_team({"team_name": "test team", "illegal_field": ""})
 
     def test_get_matches(self, database):
         database.insert_from_csv("Seasons", "test_input/seasons.csv", ";")
@@ -208,6 +234,19 @@ class TestSqlite:
                 "team_b_points": 65
             }
         ]
+    
+    def test_wrong_match_fields(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_match(1, {
+                "match_date": "20220720",
+                "match_start_time": "143000",
+                "match_end_time": "153000",
+                "team_a_id": 0,
+                "team_b_id": 1,
+                "team_a_points": 35,
+                "team_b_points": 65,
+                "illegal_field": ""
+            })
 
     def test_edit_match(self, database):
         database.insert_from_csv("Seasons", "test_input/seasons.csv", ";")
@@ -216,6 +255,10 @@ class TestSqlite:
         database.edit_match(0, {"team_a_points" : 200})
         match = database.get_match(0)
         assert match["team_a_points"] == 200
+    
+    def test_get_empty_match(self, database):
+        match = database.get_match(0)
+        assert match == {}
 
     def test_delete_match(self, database):
         database.insert_from_csv("Seasons", "test_input/seasons.csv", ";")
