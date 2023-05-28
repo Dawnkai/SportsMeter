@@ -13,11 +13,13 @@ def throws_exception(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except DatabaseUnavailableError:
+        except DatabaseUnavailableError as err:
+            print(err)
             return jsonify({"msg": "Database unavailable."}), 500
         except InvalidInputError as err:
             return jsonify({"msg": err}), 401
-        except InvalidQueryError:
+        except InvalidQueryError as err:
+            print(err)
             return jsonify({"msg": "Backend error. Check logs."}), 503
         except NoResultError as err:
             return jsonify({"msg": err}), 404
@@ -108,6 +110,15 @@ def match(match_id):
     return db.get_match(match_id)
 
 @throws_exception
+@app.route("/api/matches/<match_id>/players", methods=["GET", "POST"])
+def match_players(match_id):
+    if request.mathod == "POST":
+        if "player_id" not in request.json:
+            raise InvalidInputError("Player ID not provided.")
+        db.add_match_player(match_id, request.json["player_id"])
+    return db.get_match_players(match_id)
+
+@throws_exception
 @app.route("/api/teams/", methods=["GET", "POST"])
 def teams():
     if request.method == "POST":
@@ -129,11 +140,8 @@ def substitutions():
         db.add_substitution(request.json)
     return db.get_substitutions()
 
-@app.route("/api/substitutions/<substitution_id>", methods=["GET", "PUT", "DELETE"])
+@app.route("/api/substitutions/<substitution_id>", methods=["GET", "PUT"])
 def substitution(substitution_id):
-    if request.method == "DELETE":
-        db.delete_substitution(substitution_id)
-        return jsonify({"msg": "Substitution deleted."}), 204
     if request.method == "PUT":
         db.edit_substitution(substitution_id, request.json)
     return db.get_substitution(substitution_id, request.json), 200

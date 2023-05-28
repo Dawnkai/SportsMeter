@@ -331,3 +331,128 @@ class TestSqlite:
                 "player_gender": "some gender",
                 "player_team": 0
             })
+
+    def test_get_match_players(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        players = database.get_match_players(0)
+        with open("test_output/match_players.json", encoding="utf-8") as players_results:
+            expected_result = json.load(players_results)
+            assert players == expected_result
+
+    def test_add_match_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+
+        database.add_match_player(0, 0)
+        players = database.get_match_players(0)
+        assert players == [
+            {"match_player_id": 1, "match_player": 0, "match_id": 0, "player_active": True}
+        ]
+
+    def test_add_duplicate_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+
+        database.add_match_player(0, 0)
+        with pytest.raises(InvalidInputError):
+            database.add_match_player(0, 0)
+
+    def test_delete_match_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        database.delete_match_player(0, 0)
+        players = database.get_match_players(0)
+        assert 0 not in [ player["match_player"] for player in players ]
+
+    def test_get_substitutions(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.insert_from_csv("Substitutions", "test_input/substitutions.csv", ";")
+
+        substitutions = database.get_substitutions()
+        with open("test_output/substitutions.json", encoding="utf-8") as substitutions_results:
+            expected_result = json.load(substitutions_results)
+            assert substitutions == expected_result
+    
+    def test_get_match_substitutions(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.insert_from_csv("Substitutions", "test_input/substitutions.csv", ";")
+
+        substitutions = database.get_match_substitutions(0)
+        with open("test_output/substitutions.json", encoding="utf-8") as substitutions_results:
+            expected_result = json.load(substitutions_results)
+            assert substitutions == list(filter(lambda result: result["substitution_match"] == 0, expected_result))
+    
+    def test_add_substitution(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+
+        substitutions = database.get_match_substitutions(0)
+        assert substitutions == [
+            {"substitution_id": 1, "substitution_time": "121000", "substitution_match": 0,
+             "substituted_player": 0, "substituting_player": 3, "substituted_player_name": "Maciej Kleban",
+             "substituting_player_name": "Jakub Grzesiak"}
+        ]
+
+    def test_edit_substitution(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+        database.edit_substitution(1, {"substitution_time": "121000", "substitution_match": 0,
+                                       "substituted_player": 3, "substituting_player": 0})
+        substitutions = database.get_match_substitutions(0)
+        assert substitutions == [
+            {"substitution_id": 1, "substitution_time": "121000", "substitution_match": 0,
+             "substituted_player": 3, "substituting_player": 0, "substituted_player_name": "Jakub Grzesiak",
+             "substituting_player_name": "Maciej Kleban"}
+        ]
+
+    def test_substitute_inactive_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 0, 7)
+
+    def test_substitute_actived_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 3, 3)
+
+    def test_substitute_nonexistent_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 10, 3)

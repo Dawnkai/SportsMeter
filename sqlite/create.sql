@@ -28,9 +28,24 @@ CREATE TABLE IF NOT EXISTS Notifications (
     notification_description TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS Match_Players (
+    match_player_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_player INTEGER REFERENCES Players(player_id),
+    match_id INTEGER REFERENCES Matches(match_id),
+    player_active INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS Players (
     player_id INTEGER PRIMARY KEY AUTOINCREMENT,
     player_name TEXT NOT NULL,
     player_gender TEXT NOT NULL,
     player_team INTEGER REFERENCES Teams(team_id) NULL
+);
+
+CREATE TABLE IF NOT EXISTS Substitutions (
+    substitution_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    substitution_time TEXT NOT NULL,
+    substitution_match INTEGER REFERENCES Matches(match_id) NOT NULL,
+    substituted_player INTEGER REFERENCES Players(player_id) NOT NULL,
+    substituting_player INTEGER REFERENCES Players(player_id) NOT NULL
 );

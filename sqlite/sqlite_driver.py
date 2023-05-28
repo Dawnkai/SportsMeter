@@ -9,6 +9,8 @@ MATCH_FIELDS = ["match_id", "match_date", "match_start_time", "match_end_time",
 SEASON_FIELDS = ["season_id", "season_title", "season_start_date", "season_end_date"]
 TEAM_FIELDS = ["team_id", "team_name"]
 PLAYER_FIELDS = ["player_id", "player_name", "player_gender", "player_team"]
+SUBSTITUTION_FIELDS = ["substitution_id", "substitution_match", "substitution_time",
+                       "substituted_player", "substituting_player"]
 
 class SqliteContext:
     def __init__(self, dbpath : str) -> None:
@@ -58,6 +60,7 @@ class SqliteDriver:
         self.insert_from_csv("Teams", f"{data_directory}/teams.csv", ";")
         self.insert_from_csv("Matches", f"{data_directory}/matches.csv", ";")
         self.insert_from_csv("Notifications", f"{data_directory}/notifications.csv", ";")
+        self.insert_from_csv("Players", f"{data_directory}/players.csv", ";")
     
     def get_insert_query(self, table : str, data : dict):
         insert_query = f"INSERT INTO {table} ("
@@ -425,3 +428,162 @@ class SqliteDriver:
             except sqlite3.Error as error:
                 raise InvalidQueryError(f"Error while deleting player: {error}")
             return True
+    
+    def get_substitutions(self):
+        rows = []
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute("SELECT s.*, p1.player_name, p2.player_name FROM Substitutions s, Players p1, Players p2"
+                            " WHERE s.substituted_player = p1.player_id AND s.substituting_player = p2.player_id")
+                rows = [{
+                    "substitution_id": entry[0],
+                    "substitution_time": entry[1],
+                    "substitution_match": entry[2],
+                    "substituted_player": entry[3],
+                    "substituting_player": entry[4],
+                    "substituted_player_name": entry[5],
+                    "substituting_player_name": entry[6]   
+                } for entry in cur.fetchall()]
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching substitutions: {error}")
+        return rows
+    
+    def get_match_substitutions(self, match_id : int):
+        rows = []
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT s.*, p1.player_name, p2.player_name FROM Substitutions s, Players p1, Players p2"
+                            f" WHERE s.substituted_player = p1.player_id AND s.substituting_player = p2.player_id"
+                            f" AND s.substitution_match = {match_id}")
+                rows = [{
+                    "substitution_id": entry[0],
+                    "substitution_time": entry[1],
+                    "substitution_match": entry[2],
+                    "substituted_player": entry[3],
+                    "substituting_player": entry[4],
+                    "substituted_player_name": entry[5],
+                    "substituting_player_name": entry[6]   
+                } for entry in cur.fetchall()]
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching substitutions for match {match_id}: {error}")
+        return rows
+        
+    def get_substitution(self, substitution_id : int):
+        result = {}
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT s.*, p1.player_name, p2.player_name FROM Substitutions s, Players p1, Players p2"
+                            f" WHERE s.substituted_player = p1.player_id AND s.substituting_player = p2.player_id"
+                            f" AND s.substitution_id = {substitution_id}")
+                row = cur.fetchall()
+                result = {
+                    "substitution_id": row[0][0],
+                    "substitution_time": row[0][1],
+                    "substitution_match": row[0][2],
+                    "substituted_player": row[0][3],
+                    "substituting_player": row[0][4],
+                    "substituted_player_name": row[0][5],
+                    "substituting_player_name": row[0][6]   
+                }
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching substitution: {error}")
+            except IndexError:
+                raise NoResultError(f"Unable to find substitution with id {substitution_id}.")
+        return result
+    
+    def get_match_players(self, match_id : int):
+        rows = []
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT * FROM Match_Players WHERE match_id = {match_id}")
+                rows = [{
+                    "match_player_id": entry[0],
+                    "match_player": entry[1],
+                    "match_id": entry[2],
+                    "player_active": True if entry[3] == 1 else False
+                } for entry in cur.fetchall()]
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching players for match {match_id} : {error}")
+        return rows
+    
+    def substitute_player(self, match_id : int, old_player : int, new_player : int):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                players = self.get_match_players(match_id)
+                old_player_changed = False
+                new_player_changed = False
+                for player in players:
+                    # Draft substituted player
+                    if player["match_player"] == old_player:
+                        if player["player_active"] == False:
+                            raise InvalidInputError("Substituted player is inactive!")
+                        cur.execute(f"UPDATE Match_Players SET player_active = 0 WHERE "
+                                    f"match_id = {match_id} AND match_player = {old_player}")
+                        old_player_changed = True
+                    # Enable substituting player if they were in the match before
+                    if player["match_player"] == new_player:
+                        if player["player_active"] == True:
+                            raise InvalidInputError("Substituting player is already active!")
+                        cur.execute(f"UPDATE Match_Players SET player_active = 1 WHERE "
+                                    f"match_id = {match_id} AND match_player = {new_player}")
+                        new_player_changed = True
+
+                if not old_player_changed:
+                    raise InvalidInputError(f"Player {old_player} does not play in this match!")
+                # Add substituting player to match players if they weren't in the match before
+                if not new_player_changed:
+                    cur.execute(f"INSERT INTO Match_Players(match_player, match_id, player_active)"
+                                f"VALUES ({new_player}, {match_id}, 1)")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while changing match {match_id} players: {error}")
+    
+    def add_substitution(self, match_id : int, substitution_data : dict):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                self.substitute_player(match_id, substitution_data["substituted_player"],
+                                       substitution_data["substituting_player"])
+                substitution_data["substitution_match"] = match_id
+                cur.execute(self.get_insert_query("Substitutions", substitution_data))
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding new player: {error}")
+        return True
+    
+    def edit_substitution(self, substitution_id : int, substitution_data : dict):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                if "substitution_id" in substitution_data:
+                    del substitution_data["substitution_id"]
+                self.substitute_player(substitution_data["substitution_match"],
+                                       substitution_data["substituted_player"],
+                                       substitution_data["substituting_player"])
+                cur.execute(self.get_update_query("Substitutions", substitution_data,
+                                                  "substitution_id", substitution_id))
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while editing substitution: {error}")
+        return True
+    
+    def add_match_player(self, match_id : int, player_id : int):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                players = self.get_match_players(match_id)
+                if any(player["match_player"] == player_id for player in players):
+                    raise InvalidInputError(f"Player {player_id} is already in the match!")
+                cur.execute(self.get_insert_query("Match_Players",
+                                                  {"match_player": player_id, "match_id": match_id, "player_active": 1}
+                                                  ))
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding match player: {error}")
+        return True
+
+    def delete_match_player(self, match_id : int, player_id : int):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"DELETE FROM Match_Players WHERE match_id = {match_id} AND match_player = {player_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting player {player_id}: {error}")
+        return True
