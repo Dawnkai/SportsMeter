@@ -6,3 +6,6 @@ class InvalidInputError(Exception):
 
 class InvalidQueryError(Exception):
     pass
+
+class NoResultError(Exception):
+    pass

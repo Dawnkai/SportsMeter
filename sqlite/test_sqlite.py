@@ -3,7 +3,7 @@ import pytest
 
 from os import path, remove
 from .sqlite_driver import SqliteDriver
-from backend.exceptions import InvalidInputError
+from backend.exceptions import InvalidInputError, NoResultError
 
 class TestSqlite:
     @pytest.fixture
@@ -14,47 +14,47 @@ class TestSqlite:
         if path.exists("test.db"):
             remove("test.db")
 
-    def test_get_events(self, database):
-        database.insert_from_csv("Events", "test_input/events.csv", ";")
-        events = database.get_events()
-        with open("test_output/events.json", encoding="utf-8") as events_results:
-            expected_result = json.load(events_results)
-            assert events == expected_result
+    def test_get_notifications(self, database):
+        database.insert_from_csv("Notifications", "test_input/notifications.csv", ";")
+        notifications = database.get_notifications()
+        with open("test_output/notifications.json", encoding="utf-8") as notifications_results:
+            expected_result = json.load(notifications_results)
+            assert notifications == expected_result
 
-    def test_add_event(self, database):
-        database.add_event(
+    def test_add_notification(self, database):
+        database.add_notification(
             {
-                "event_title": "test_event",
-                "event_description": ""
+                "notification_title": "test_notification",
+                "notification_description": ""
             }
         )
-        events = database.get_events()
-        assert events == [
+        notifications = database.get_notifications()
+        assert notifications == [
             {
-                "event_id": 1,
-                "event_title": "test_event",
-                "event_description": ""
+                "notification_id": 1,
+                "notification_title": "test_notification",
+                "notification_description": ""
             }
         ]
 
-    def test_edit_event(self, database):
-        database.insert_from_csv("Events", "test_input/events.csv", ";")
-        database.edit_event(0, {"event_title" : "edited title"})
-        events = database.get_events()
-        assert events[0]["event_title"] == "edited title"
+    def test_edit_notification(self, database):
+        database.insert_from_csv("Notifications", "test_input/notifications.csv", ";")
+        database.edit_notification(0, {"notification_title" : "edited title"})
+        notifications = database.get_notifications()
+        assert notifications[0]["notification_title"] == "edited title"
     
-    def test_delete_event(self, database):
-        database.insert_from_csv("Events", "test_input/events.csv", ";")
-        database.delete_event(0)
-        events = database.get_events()
-        assert len(events) == 3 and events[0]["event_id"] != 0
+    def test_delete_notification(self, database):
+        database.insert_from_csv("Notifications", "test_input/notifications.csv", ";")
+        database.delete_notification(0)
+        notifications = database.get_notifications()
+        assert len(notifications) == 3 and notifications[0]["notification_id"] != 0
 
-    def test_wrong_event_fields(self, database):
+    def test_wrong_notification_fields(self, database):
         with pytest.raises(InvalidInputError):
-            database.add_event(
+            database.add_notification(
                 {
-                    "event_title": "wrong_event",
-                    "event_description": "",
+                    "notification_title": "wrong_notification",
+                    "notification_description": "",
                     "illegal_field": "value"
                 }
             )
@@ -267,3 +267,192 @@ class TestSqlite:
         database.delete_match(0)
         matches = database.get_matches()
         assert matches[0]["match_id"] != 0
+    
+    def test_get_players(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        players = database.get_players()
+        with open("test_output/players.json", encoding="utf-8") as players_results:
+            expected_result = json.load(players_results)
+            assert players == expected_result
+    
+    def test_get_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        player = database.get_player(1)
+        assert player["player_id"] == 1
+
+    def test_add_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.add_player({
+            "player_name": "Test Name",
+            "player_gender": "Male",
+            "player_team": 0
+        })
+        player = database.get_player(1)
+        assert player == {
+            "player_id": 1,
+            "player_name": "Test Name",
+            "player_gender": "Male",
+            "player_team": "Poznań Capricorns"
+        }
+    
+    def test_wrong_player_fields(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_player({
+                "player_name": "Test Name",
+                "player_gender": "Male",
+                "player_team": 0,
+                "illegal_field": ""
+            })
+
+    def test_edit_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.edit_player(1, {"player_name" : "Edited Name"})
+        match = database.get_player(1)
+        assert match["player_name"] == "Edited Name"
+    
+    def test_get_empty_player(self, database):
+        with pytest.raises(NoResultError):
+            database.get_player(0)
+
+    def test_delete_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.delete_player(1)
+        with pytest.raises(NoResultError):
+            database.get_player(1)
+    
+    def test_wrong_gender(self, database):
+        with pytest.raises(InvalidInputError):
+            database.add_player({
+                "player_name": "Test Name",
+                "player_gender": "some gender",
+                "player_team": 0
+            })
+
+    def test_get_match_players(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        players = database.get_match_players(0)
+        with open("test_output/match_players.json", encoding="utf-8") as players_results:
+            expected_result = json.load(players_results)
+            assert players == expected_result
+
+    def test_add_match_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+
+        database.add_match_player(0, 0)
+        players = database.get_match_players(0)
+        assert players == [
+            {"match_player_id": 1, "match_player": 0, "match_id": 0, "player_active": True}
+        ]
+
+    def test_add_duplicate_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+
+        database.add_match_player(0, 0)
+        with pytest.raises(InvalidInputError):
+            database.add_match_player(0, 0)
+
+    def test_delete_match_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        database.delete_match_player(0, 0)
+        players = database.get_match_players(0)
+        assert 0 not in [ player["match_player"] for player in players ]
+
+    def test_get_substitutions(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.insert_from_csv("Substitutions", "test_input/substitutions.csv", ";")
+
+        substitutions = database.get_substitutions()
+        with open("test_output/substitutions.json", encoding="utf-8") as substitutions_results:
+            expected_result = json.load(substitutions_results)
+            assert substitutions == expected_result
+    
+    def test_get_match_substitutions(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.insert_from_csv("Substitutions", "test_input/substitutions.csv", ";")
+
+        substitutions = database.get_match_substitutions(0)
+        with open("test_output/substitutions.json", encoding="utf-8") as substitutions_results:
+            expected_result = json.load(substitutions_results)
+            assert substitutions == list(filter(lambda result: result["substitution_match"] == 0, expected_result))
+    
+    def test_add_substitution(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+
+        substitutions = database.get_match_substitutions(0)
+        assert substitutions == [
+            {"substitution_id": 1, "substitution_time": "121000", "substitution_match": 0,
+             "substituted_player": 0, "substituting_player": 3, "substituted_player_name": "Maciej Kleban",
+             "substituting_player_name": "Jakub Grzesiak"}
+        ]
+
+    def test_edit_substitution(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+        database.edit_substitution(1, {"substitution_time": "121000", "substitution_match": 0,
+                                       "substituted_player": 3, "substituting_player": 0})
+        substitutions = database.get_match_substitutions(0)
+        assert substitutions == [
+            {"substitution_id": 1, "substitution_time": "121000", "substitution_match": 0,
+             "substituted_player": 3, "substituting_player": 0, "substituted_player_name": "Jakub Grzesiak",
+             "substituting_player_name": "Maciej Kleban"}
+        ]
+
+    def test_substitute_inactive_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 0, 7)
+
+    def test_substitute_actived_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+        database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
+                                      "substituted_player": 0, "substituting_player": 3})
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 3, 3)
+
+    def test_substitute_nonexistent_player(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 10, 3)
