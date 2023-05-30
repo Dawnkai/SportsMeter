@@ -418,14 +418,14 @@ class TestSqlite:
         database.insert_from_csv("Matches", "test_input/matches.csv", ";")
         database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
         database.add_substitution(0, {"substitution_time": "121000", "substitution_match": 0,
-                                      "substituted_player": 0, "substituting_player": 3})
+                                      "substituted_player": 1, "substituting_player": 2})
         database.edit_substitution(1, {"substitution_time": "121000", "substitution_match": 0,
-                                       "substituted_player": 3, "substituting_player": 0})
+                                       "substituted_player": 2, "substituting_player": 1})
         substitutions = database.get_match_substitutions(0)
         assert substitutions == [
             {"substitution_id": 1, "substitution_time": "121000", "substitution_match": 0,
-             "substituted_player": 3, "substituting_player": 0, "substituted_player_name": "Jakub Grzesiak",
-             "substituting_player_name": "Maciej Kleban"}
+             "substituted_player": 2, "substituting_player": 1, "substituted_player_name": "Kinga Banasik",
+             "substituting_player_name": "Krzysztof Herbot"}
         ]
 
     def test_substitute_inactive_player(self, database):
@@ -456,3 +456,30 @@ class TestSqlite:
 
         with pytest.raises(InvalidInputError):
             database.substitute_player(0, 10, 3)
+
+    def test_substitute_different_teams(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 0, 1)
+
+    def test_add_match_player_gender_rule(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        with pytest.raises(InvalidInputError):
+            database.add_match_player(0, 3)
+
+    def test_substitute_gender_rule(self, database):
+        database.insert_from_csv("Teams", "test_input/teams.csv", ";")
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.insert_from_csv("Match_Players", "test_input/match_players.csv", ";")
+
+        with pytest.raises(InvalidInputError):
+            database.substitute_player(0, 6, 3)

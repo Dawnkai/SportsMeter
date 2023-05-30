@@ -11,6 +11,7 @@ TEAM_FIELDS = ["team_id", "team_name"]
 PLAYER_FIELDS = ["player_id", "player_name", "player_gender", "player_team"]
 SUBSTITUTION_FIELDS = ["substitution_id", "substitution_match", "substitution_time",
                        "substituted_player", "substituting_player"]
+MAX_GENDER_PLAYERS = 4
 
 class SqliteContext:
     def __init__(self, dbpath : str) -> None:
@@ -506,34 +507,64 @@ class SqliteDriver:
                 raise InvalidQueryError(f"Error while fetching players for match {match_id} : {error}")
         return rows
     
+    def check_gender_ratio(self, match_id : int, player_id : int, old_player_id = None):
+        player_data = self.get_player(player_id)
+        gender_ratio = {"Male": 0, "Female": 0, "Nonbinary": 0}
+
+        if old_player_id is not None:
+            old_player = self.get_player(old_player_id)
+            gender_ratio[old_player["player_gender"]] -= 1
+        gender_ratio[player_data["player_gender"]] += 1
+
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT p.player_gender FROM Match_Players mp, Players p WHERE mp.match_id"
+                            f" = {match_id} AND mp.match_player_id = p.player_id AND mp.player_active = 1")
+                for row in cur.fetchall():
+                    gender_ratio[row[0]] += 1
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching gender ratio: {error}")
+        
+        if any(gender > MAX_GENDER_PLAYERS for gender in gender_ratio.values()):
+            raise InvalidInputError("Gender rule broken!")
+        
+    def check_players_same_team(self, old_player : int, new_player : int):
+        old_player_data = self.get_player(old_player)
+        new_player_data = self.get_player(new_player)
+        if old_player_data["player_team"] != new_player_data["player_team"]:
+            raise InvalidInputError("Players are not in the same team!")
+        return True
+    
     def substitute_player(self, match_id : int, old_player : int, new_player : int):
         with SqliteContext(self.dbpath) as [conn, cur]:
             try:
+                self.check_players_same_team(old_player, new_player)
                 players = self.get_match_players(match_id)
-                old_player_changed = False
-                new_player_changed = False
+                old_player_detected = False
+                new_player_detected = False
                 for player in players:
-                    # Draft substituted player
                     if player["match_player"] == old_player:
                         if player["player_active"] == False:
                             raise InvalidInputError("Substituted player is inactive!")
-                        cur.execute(f"UPDATE Match_Players SET player_active = 0 WHERE "
-                                    f"match_id = {match_id} AND match_player = {old_player}")
-                        old_player_changed = True
-                    # Enable substituting player if they were in the match before
+                        old_player_detected = True
                     if player["match_player"] == new_player:
                         if player["player_active"] == True:
                             raise InvalidInputError("Substituting player is already active!")
-                        cur.execute(f"UPDATE Match_Players SET player_active = 1 WHERE "
-                                    f"match_id = {match_id} AND match_player = {new_player}")
-                        new_player_changed = True
+                        new_player_detected = True
 
-                if not old_player_changed:
+                if not old_player_detected:
                     raise InvalidInputError(f"Player {old_player} does not play in this match!")
-                # Add substituting player to match players if they weren't in the match before
-                if not new_player_changed:
+                cur.execute(f"UPDATE Match_Players SET player_active = 0 WHERE "
+                            f"match_id = {match_id} AND match_player = {old_player}")
+                
+                if not new_player_detected:
+                    self.check_gender_ratio(match_id, new_player, old_player)
                     cur.execute(f"INSERT INTO Match_Players(match_player, match_id, player_active)"
                                 f"VALUES ({new_player}, {match_id}, 1)")
+                else:
+                    cur.execute(f"UPDATE Match_Players SET player_active = 1 WHERE "
+                                f"match_id = {match_id} AND match_player = {new_player}")
+                    
                 conn.commit()
             except sqlite3.Error as error:
                 raise InvalidQueryError(f"Error while changing match {match_id} players: {error}")
@@ -568,6 +599,7 @@ class SqliteDriver:
     def add_match_player(self, match_id : int, player_id : int):
         with SqliteContext(self.dbpath) as [conn, cur]:
             try:
+                self.check_gender_ratio(match_id, player_id)
                 players = self.get_match_players(match_id)
                 if any(player["match_player"] == player_id for player in players):
                     raise InvalidInputError(f"Player {player_id} is already in the match!")
