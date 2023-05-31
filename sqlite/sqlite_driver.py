@@ -619,3 +619,54 @@ class SqliteDriver:
             except sqlite3.Error as error:
                 raise InvalidQueryError(f"Error while deleting player {player_id}: {error}")
         return True
+
+    def user_exists(self, user_login : str, user_password : str):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT * FROM Users WHERE user_login = '{user_login}' "
+                            f"AND user_password = '{user_password}'")
+                rows = cur.fetchall()
+                if len(rows) > 0:
+                    return True
+                else:
+                    return False
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching user : {error}")
+            
+    def login_exists(self, login : str):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT * FROM Users WHERE user_login = '{login}'")
+                rows = cur.fetchall()
+                if len(rows) > 0:
+                    return True
+                else:
+                    return False
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching login : {error}")
+
+    def add_user(self, user_login : str, user_password : str):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                if self.user_exists(user_login, user_password):
+                    raise InvalidInputError(f"User {user_login} already exists!")
+                cur.execute(self.get_insert_query("Users", {"user_login": user_login, "user_password": user_password}))
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding new user : {error}")
+
+    def edit_user(self, user_id : int, user_data : dict):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(self.get_update_query("Users", user_data, "user_id", user_id))
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while editing user {user_id} : {error}")
+
+    def delete_user(self, user_id):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"DELETE FROM Users WHERE user_id = {user_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting user {user_id}: {error}")

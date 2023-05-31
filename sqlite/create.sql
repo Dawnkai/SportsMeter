@@ -49,3 +49,9 @@ CREATE TABLE IF NOT EXISTS Substitutions (
     substituted_player INTEGER REFERENCES Players(player_id) NOT NULL,
     substituting_player INTEGER REFERENCES Players(player_id) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS Users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_login TEXT NOT NULL,
+    user_password TEXT NOT NULL
+);
