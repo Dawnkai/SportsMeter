@@ -11,6 +11,7 @@ TEAM_FIELDS = ["team_id", "team_name"]
 PLAYER_FIELDS = ["player_id", "player_name", "player_gender", "player_team"]
 SUBSTITUTION_FIELDS = ["substitution_id", "substitution_match", "substitution_time",
                        "substituted_player", "substituting_player"]
+EVENT_FIELDS = ["event_id", "match_id", "event_player_1", "event_player_2", "event_type", "event_value"]
 MAX_GENDER_PLAYERS = 4
 
 class SqliteContext:
@@ -69,7 +70,10 @@ class SqliteDriver:
             insert_query += f"{key}, "
         insert_query = insert_query[:-2] + ") VALUES ("
         for value in data.values():
-            insert_query += f"'{value}', " if type(value) == str else f"{value}, "
+            if value is None:
+                insert_query += "NULL, "
+            else:
+                insert_query += f"'{value}', " if type(value) == str else f"{value}, "
         insert_query = insert_query[:-2] + ")"
         return insert_query
     
@@ -77,7 +81,10 @@ class SqliteDriver:
         update_query = f"UPDATE {table} SET "
         for key in data:
             update_query += f"{key} = "
-            update_query += f"'{data[key]}', " if type(data[key]) == str else f"{data[key]}, "
+            if data[key] is None:
+                update_query += "NULL, "
+            else:
+                update_query += f"'{data[key]}', " if type(data[key]) == str else f"{data[key]}, "
         update_query = update_query[:-2] + f" WHERE {target_name} = {target_value}"
         return update_query
     
@@ -663,10 +670,104 @@ class SqliteDriver:
             except sqlite3.Error as error:
                 raise InvalidQueryError(f"Error while editing user {user_id} : {error}")
 
-    def delete_user(self, user_id):
+    def delete_user(self, user_id : int):
         with SqliteContext(self.dbpath) as [conn, cur]:
             try:
                 cur.execute(f"DELETE FROM Users WHERE user_id = {user_id}")
                 conn.commit()
             except sqlite3.Error as error:
                 raise InvalidQueryError(f"Error while deleting user {user_id}: {error}")
+
+    def get_events(self):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute("SELECT * FROM Events")
+                response = [
+                    {
+                        "event_id": row[0],
+                        "match_id": row[1],
+                        "event_player_1": row[2],
+                        "event_player_2": row[3],
+                        "event_type": row[4],
+                        "event_value": row[5]
+                    } for row in cur.fetchall()
+                ]
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching events: {error}")
+            return response
+    
+    def get_event(self, event_id : int):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT * FROM Events WHERE event_id = {event_id}")
+                row = cur.fetchall()
+                response = {
+                    "event_id": row[0][0],
+                    "match_id": row[0][1],
+                    "event_player_1": row[0][2],
+                    "event_player_2": row[0][3],
+                    "event_type": row[0][4],
+                    "event_value": row[0][5]
+                }
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching event {event_id}: {error}")
+            return response
+    
+    def get_match_events(self, match_id : int):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"SELECT * FROM Events WHERE match_id = {match_id}")
+                response = [
+                    {
+                        "event_id": row[0],
+                        "match_id": row[1],
+                        "event_player_1": row[2],
+                        "event_player_2": row[3],
+                        "event_type": row[4],
+                        "event_value": row[5]
+                    } for row in cur.fetchall()
+                ]
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while fetching match {match_id} events: {error}")
+            return response
+
+    def add_event(self, event_data : dict):
+        self.input_valid(EVENT_FIELDS, event_data)
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(self.get_insert_query("Events", event_data))
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while adding event: {error}")
+            
+            cur.execute("SELECT * FROM Events ORDER BY event_id DESC LIMIT 1")
+            res = cur.fetchall()
+            row = {
+                "event_id": res[0][0],
+                "match_id": res[0][1],
+                "event_player_1": res[0][2],
+                "event_player_2": res[0][3],
+                "event_type": res[0][4],
+                "event_value": res[0][5]
+            }
+            return row
+
+    def delete_event(self, event_id : int):
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(f"DELETE FROM Events WHERE event_id = {event_id}")
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while deleting event {event_id}: {error}")
+    
+    def edit_event(self, event_id : int, event_data : dict):
+        self.input_valid(EVENT_FIELDS, event_data)
+        if "event_id" in event_data:
+            del event_data["event_id"]
+        with SqliteContext(self.dbpath) as [conn, cur]:
+            try:
+                cur.execute(self.get_update_query("Events", event_data, "event_id", event_id))
+                conn.commit()
+            except sqlite3.Error as error:
+                raise InvalidQueryError(f"Error while editing event {event_id}: {error}")
+        return self.get_event(event_id)

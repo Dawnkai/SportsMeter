@@ -201,7 +201,29 @@ def players():
 def player(player_id):
     if request.method == "DELETE":
         db.delete_player(player_id)
-        return jsonify({"msg": "Player deleted."})
+        return jsonify({"msg": "Player deleted."}), 204
     if request.method == "PUT":
         db.edit_player(player_id, request.json)
     return db.get_player(player_id)
+
+@app.route("/api/events", methods=["GET", "POST"])
+@throws_exception
+def events():
+    if request.method == "POST":
+        return db.add_event(request.json)
+    return db.get_events(request.json)
+
+@app.route("/api/events/<event_id>", methods=["GET", "PUT", "DELETE"])
+@throws_exception
+def event(event_id):
+    if request.method == "PUT":
+        return db.edit_event(event_id, request.json)
+    if request.method == "DELETE":
+        db.delete_event(event_id)
+        return jsonify({"msg": "Event deleted."}), 204
+    return db.get_event(event_id)
+
+@app.route("/api/matches/<match_id>/events", methods=["GET"])
+@throws_exception
+def match_events(match_id):
+    return db.get_match_events(match_id)

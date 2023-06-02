@@ -55,3 +55,12 @@ CREATE TABLE IF NOT EXISTS Users (
     user_login TEXT NOT NULL,
     user_password TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS Events (
+    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id INTEGER REFERENCES Matches(match_id) NOT NULL,
+    event_player_1 INTEGER REFERENCES Players(player_id) NOT NULL,
+    event_player_2 INTEGER REFERENCES Players(player_id) NULL,
+    event_type TEXT NOT NULL,
+    event_value INTEGER NULL
+);
