@@ -483,3 +483,83 @@ class TestSqlite:
 
         with pytest.raises(InvalidInputError):
             database.substitute_player(0, 6, 3)
+
+    def test_add_event(self, database):
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        expected_result = {
+            "match_id": 0, "event_player_1": 0, "event_player_2": 1,
+            "event_type": "shots", "event_value": 1
+        }
+        res = database.add_event(expected_result)
+        expected_result["event_id"] = 1
+        assert res == expected_result
+    
+    def test_get_event(self, database):
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        expected_result = database.add_event({
+            "match_id": 0, "event_player_1": 0, "event_player_2": 1,
+            "event_type": "shots", "event_value": 1
+        })
+        res = database.get_event(1)
+        assert res == expected_result
+    
+    def test_get_events(self, database):
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        event_1 = database.add_event({
+            "match_id": 0, "event_player_1": 0, "event_player_2": 1,
+            "event_type": "shots", "event_value": 1
+        })
+        event_2 = database.add_event({
+            "match_id": 0, "event_player_1": 0, "event_player_2": None,
+            "event_type": "red card", "event_value": 1
+        })
+
+        events = database.get_events()
+        assert events == [event_1, event_2]
+
+    def test_get_match_events(self, database):
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        event_1 = database.add_event({
+            "match_id": 0, "event_player_1": 0, "event_player_2": 1,
+            "event_type": "shots", "event_value": 1
+        })
+        database.add_event({
+            "match_id": 1, "event_player_1": 0, "event_player_2": None,
+            "event_type": "red card", "event_value": 1
+        })
+
+        events = database.get_match_events(0)
+        assert events == [event_1]
+
+    def test_delete_match(self, database):
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        event_1 = database.add_event({
+            "match_id": 0, "event_player_1": 0, "event_player_2": 1,
+            "event_type": "shots", "event_value": 1
+        })
+        assert event_1 == database.get_event(1)
+        database.delete_event(1)
+        events = database.get_events()
+        assert len(events) == 0
+
+    def test_edit_match(self, database):
+        database.insert_from_csv("Players", "test_input/players.csv", ";")
+        database.insert_from_csv("Matches", "test_input/matches.csv", ";")
+        database.add_event({
+            "match_id": 0, "event_player_1": 0, "event_player_2": 1,
+            "event_type": "shots", "event_value": 1
+        })
+        event_1 = database.edit_event(1, {"event_type": "misses"})
+        assert event_1 == {
+            "event_id": 1,
+            "match_id": 0,
+            "event_player_1": 0,
+            "event_player_2": 1,
+            "event_type": "misses",
+            "event_value": 1
+        }
