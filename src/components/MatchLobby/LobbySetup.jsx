@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-import axios from 'axios';
 
 import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
@@ -18,12 +18,12 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import AddMatchDialog from './AddMatchDialog';
-import EventItem from './EventItem';
-import MatchItem from './MatchItem';
-import MainLobby from './MainLobby';
+import AddMatchDialog from '../MainPage/AddMatchDialog';
+import EventItem from '../MainPage/EventItem';
+import MatchItem from '../MainPage/MatchItem';
+import MainLobby from '../MatchLobby/MainLobby';
 import { grey } from '@mui/material/colors';
-import { BorderColor } from '@mui/icons-material';
+import { BorderColor, CenterFocusStrong } from '@mui/icons-material';
 
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -36,7 +36,19 @@ export default function LobbySetup() {
     const [matches, setMatches] = useState([]);
     const [highscore, setHighscore] = useState([]);
     const [events, setEvents] = useState([]);
+    const [teams, setTeams] = useState([]);
     const [addMatchDialogOpen, setAddMatchDialogOpen] = useState(false);
+
+    const [teamA, setTeamA] = React.useState('');
+    const [teamB, setTeamB] = React.useState('');
+
+    const handleTeamA = (event) => {
+        setTeamA(event.target.value);
+    };
+    const handleTeamB = (event) => {
+        setTeamB(event.target.value);
+    };
+
 
     const fetchSeasons = async () => {
         try {
@@ -56,7 +68,7 @@ export default function LobbySetup() {
         }
     }
 
-    {/**check axios documentation*/}
+    {/**check axios documentation*/ }
     const fetchSeasonInfo = (seasonId) => {
         if (seasonId === null) return;
         try {
@@ -67,6 +79,15 @@ export default function LobbySetup() {
                 setHighscore(response?.data);
             });
             setSelectedSeason(seasonId);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const fetchTeams = () => {
+        try {
+            const result = axios.get('/api/teams/');
+            setTeams(result?.data);
         } catch (error) {
             console.log(error);
         }
@@ -87,7 +108,7 @@ export default function LobbySetup() {
                     border: '1px solid',
                     borderRadius: '4px',
                     borderColor: 'lightgrey',
-                    padding: '12px',
+                    padding: '42px',
                     mt: 2,
                     mb: 2,
                 }}
@@ -99,6 +120,7 @@ export default function LobbySetup() {
 
     useEffect(() => {
         fetchSeasons();
+        fetchTeams();
         fetchEvents(0);
         fetchSeasonInfo(0);
     }, []);
@@ -107,8 +129,67 @@ export default function LobbySetup() {
 
     return (
         
-        <BorderBox m={4}>
-            <Typography>Hi world!</Typography>
-        </BorderBox>
+            <Grid container spacing={3}>
+                <Grid item xs={3}>
+
+                </Grid>
+                
+                <Grid item xs={6}>
+                <BorderBox>
+                    <Grid container spacing={3}>
+                        <Grid xs={5}>
+                            <Box sx={{ minWidth: 80 }}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="demo-simple-select-label2">Team A</InputLabel>
+                                    <Select
+                                        labelId="demo-simple-select-label2"
+                                        id="demo-simple-select2"
+                                        value={teamA}
+                                        label="Team A"
+                                        onChange={handleTeamA}
+                                    >
+                                        <MenuItem value={10}>Player 5</MenuItem>
+                                        <MenuItem value={20}>Player 6</MenuItem>
+                                        <MenuItem value={30}>Player 7</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        </Grid>
+                        <Grid xs={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography sx>VS</Typography>
+                        </Grid>
+                        <Grid xs={5}>
+                        <FormControl fullWidth>
+                                    <InputLabel id="demo-simple-select-label2">Team B</InputLabel>
+                                    <Select
+                                        labelId="demo-simple-select-label2"
+                                        id="demo-simple-select2"
+                                        value={teamB}
+                                        label="Team B"
+                                        onChange={handleTeamB}
+                                    >
+                                        <MenuItem value={10}>Player 5</MenuItem>
+                                        <MenuItem value={20}>Player 6</MenuItem>
+                                        <MenuItem value={30}>Player 7</MenuItem>
+                                    </Select>
+                                </FormControl>
+                        </Grid>
+                    </Grid>
+                    <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
+                    <Button 
+                    variant="contained"
+                    color="success">
+                        Start Lobby
+                    </Button>
+                    </Box>
+                    
+                    </BorderBox>
+                </Grid>
+                
+                <Grid item xs={3}>
+
+                </Grid>
+            </Grid>
+
     )
 }

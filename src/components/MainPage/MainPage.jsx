@@ -102,7 +102,7 @@ export default function MainPage() {
     return (
         <Box m={3}>
             <Box m={2}>
-                <Button onClick={() => navigate('/lobby')} >
+                <Button onClick={() => navigate('/setlobby')} >
                     New Match
                 </Button>
             </Box>
