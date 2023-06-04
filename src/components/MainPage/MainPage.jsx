@@ -50,6 +50,7 @@ export default function MainPage() {
         }
     }
 
+    {/**check axios documentation*/}
     const fetchSeasonInfo = (seasonId) => {
         if (seasonId === null) return;
         try {
