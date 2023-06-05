@@ -190,7 +190,7 @@ export default function LobbySetup() {
                             variant="contained"
                             color="success"
                             onClick={
-                                () => navigate('/lobby/${match_id}')
+                                () => navigate(`/lobby/'${match_id}`)
                             }>
                             Start Lobby
                         </Button>

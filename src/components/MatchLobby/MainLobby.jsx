@@ -118,7 +118,6 @@ export default function MainLobby() {
         try {
             const result = await axios(`/api/matches/${match_id}`);
             setMatchDetails(result?.data);
-            setMatchDetailsPUT(result?.data);
         }
         catch (error) {
             console.log(error);
@@ -143,7 +142,7 @@ export default function MainLobby() {
 
         /* Put data on backend*/
         try {
-            const res = axios.put(`/api/matches/${match_id}`, matchDetails);
+            const res = axios.put(`/api/matches/${match_id}`, {"match_id":matchDetails.id, "team_a_points":matchDetails.team_a_points, "team_b_points":matchDetails.team_b_points});
         }
         catch (error) {
             console.log(error);
@@ -352,7 +351,7 @@ export default function MainLobby() {
                                     </ListItem>
                                 </List>
                             </Grid>
-                            {/* SCORE */}
+                            {/* SCORE (maybe change to MatchDetails.team_a_points) TODO*/}
                             <Grid item xs={4} sx={{ fontSize: 72 }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 {team_a_score}:{team_b_score}
                             </Grid>
