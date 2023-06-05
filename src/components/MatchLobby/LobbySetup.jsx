@@ -84,9 +84,9 @@ export default function LobbySetup() {
         }
     }
 
-    const fetchTeams = () => {
+    const fetchTeams = async () => {
         try {
-            const result = axios.get('/api/teams/');
+            const result = await axios.get('/api/teams/');
             setTeams(result?.data);
         } catch (error) {
             console.log(error);
@@ -128,13 +128,13 @@ export default function LobbySetup() {
     const navigate = useNavigate();
 
     return (
-        
-            <Grid container spacing={3}>
-                <Grid item xs={3}>
 
-                </Grid>
-                
-                <Grid item xs={6}>
+        <Grid container spacing={3}>
+            <Grid item xs={3}>
+
+            </Grid>
+
+            <Grid item xs={6}>
                 <BorderBox>
                     <Grid container spacing={3}>
                         <Grid xs={5}>
@@ -148,9 +148,14 @@ export default function LobbySetup() {
                                         label="Team A"
                                         onChange={handleTeamA}
                                     >
-                                        <MenuItem value={10}>Player 5</MenuItem>
-                                        <MenuItem value={20}>Player 6</MenuItem>
-                                        <MenuItem value={30}>Player 7</MenuItem>
+                                        {
+                                        teams.length > 0 &&
+                                        teams.map((team, index) => (
+                                            
+                                            <MenuItem value={team?.team_id}>{team?.team_name}</MenuItem>
+
+                                        ))
+                                    }
                                     </Select>
                                 </FormControl>
                             </Box>
@@ -159,37 +164,45 @@ export default function LobbySetup() {
                             <Typography sx>VS</Typography>
                         </Grid>
                         <Grid xs={5}>
-                        <FormControl fullWidth>
-                                    <InputLabel id="demo-simple-select-label2">Team B</InputLabel>
-                                    <Select
-                                        labelId="demo-simple-select-label2"
-                                        id="demo-simple-select2"
-                                        value={teamB}
-                                        label="Team B"
-                                        onChange={handleTeamB}
-                                    >
-                                        <MenuItem value={10}>Player 5</MenuItem>
-                                        <MenuItem value={20}>Player 6</MenuItem>
-                                        <MenuItem value={30}>Player 7</MenuItem>
-                                    </Select>
-                                </FormControl>
+                            <FormControl fullWidth>
+                                <InputLabel id="demo-simple-select-label2">Team B</InputLabel>
+                                <Select
+                                    labelId="demo-simple-select-label2"
+                                    id="demo-simple-select2"
+                                    value={teamB}
+                                    label="Team B"
+                                    onChange={handleTeamB}
+                                >
+                                    {
+                                        teams.length > 0 &&
+                                        teams.map((team, index) => (
+                                            /*team?.team_name !== teamB && team?.team_name !== teamA &&*/
+                                            <MenuItem value={team?.team_id}>{team?.team_name}</MenuItem>
+
+                                        ))
+                                    }
+                                </Select>
+                            </FormControl>
                         </Grid>
                     </Grid>
                     <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
-                    <Button 
-                    variant="contained"
-                    color="success">
-                        Start Lobby
-                    </Button>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            onClick={
+                                () => navigate('/lobby/${match_id}')
+                            }>
+                            Start Lobby
+                        </Button>
                     </Box>
-                    
-                    </BorderBox>
-                </Grid>
-                
-                <Grid item xs={3}>
 
-                </Grid>
+                </BorderBox>
             </Grid>
+
+            <Grid item xs={3}>
+
+            </Grid>
+        </Grid>
 
     )
 }

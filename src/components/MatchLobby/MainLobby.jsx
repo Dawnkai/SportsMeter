@@ -49,6 +49,7 @@ import Stopwatch from './Stopwatch';
 
 import parseDate from '../../utils/parseDate';
 import parseTime from '../../utils/parseTime';
+import MatchDetails from '../MatchDetails/MatchDetails';
 
 export default function MainLobby() {
     const { match_id } = useParams();
@@ -58,6 +59,19 @@ export default function MainLobby() {
             "match_id": 0, "team_a_name": "", "team_a_points": 0,
             "team_b_name": "", "team_b_points": 0, "match_date": "",
             "match_start_time": "", "match_end_time": ""
+        }
+    );
+    const [matchDetailsPUT, setMatchDetailsPUT] = useState(
+        {
+            "match_id": 0,
+            "match_date": "",
+            "match_start_time":"",
+            "match_end_time":"",
+            "match_season":0,
+            "team_a_id":0,
+            "team_b_id":0,
+            "team_a_points":0,
+            "team_b_points":0
         }
     );
     const [team_a_score, setTeam_a_score] = useState(0); //add if statement for <0
@@ -100,6 +114,46 @@ export default function MainLobby() {
         return false;
     }
 
+    const fetchMatchDetails = async () => {
+        try {
+            const result = await axios(`/api/matches/${match_id}`);
+            setMatchDetails(result?.data);
+            setMatchDetailsPUT(result?.data);
+        }
+        catch (error) {
+            console.log(error);
+            navigate("/");
+        }
+    }
+
+
+    const initMatchDetails =  () => {
+        setTeam_a_score(matchDetails.team_a_points);
+        setTeam_b_score(matchDetails.team_b_points);
+    }
+
+
+    const updateBackend =  () => {
+        /* update matchDetails*/
+        matchDetails.team_a_points = team_a_score;
+        matchDetails.team_a_points = team_a_score;
+        matchDetailsPUT.team_a_points = team_a_score;
+        matchDetailsPUT.team_a_points = team_a_score;
+
+
+        /* Put data on backend*/
+        try {
+            const res = axios.put(`/api/matches/${match_id}`, matchDetails);
+        }
+        catch (error) {
+            console.log(error);
+            navigate("/");
+        }
+
+
+    }
+    
+
     /*const fetchTeams = async () => {
         try {
             const result = await axios('/api/teams');
@@ -128,9 +182,7 @@ export default function MainLobby() {
 
 
 
-    useEffect(() => {
-        SnitchCatch();
-    }, []);
+    
 
     const BorderBox = ({ children }) => {
         return (
@@ -169,11 +221,11 @@ export default function MainLobby() {
                 >
                     <Paper>
                         <IconButton
-                            aria-label="fail" sx={{ backgroundColor: 'red', m: 2, '&:hover': { backGroundColor: 'darkRed', }, }}>
+                            aria-label="fail" sx={{ backgroundColor: 'red', m: 2, '&:hover': { backgroundColor: 'darkRed', }, }}>
                             <Cancel />
                         </IconButton>
                         <IconButton
-                            aria-label="success" sx={{ backgroundColor: 'green', m: 2, '&:hover': { backGroundColor: 'darkGreen', }, }}>
+                            aria-label="success" sx={{ backgroundColor: 'green', m: 2, '&:hover': { backgroundColor: 'darkGreen', }, }}>
                             <CheckCircle />
                         </IconButton>
                     </Paper>
@@ -189,9 +241,10 @@ export default function MainLobby() {
     const navigate = useNavigate();
 
     useEffect(() => {
-
-    }, [])
-
+        SnitchCatch();
+        fetchMatchDetails();
+        initMatchDetails();
+    }, []);
 
     return (
         <>
@@ -265,7 +318,7 @@ export default function MainLobby() {
                     {/* Team A name, logo and color */}
                     <Grid item xs={3}>
                         <Typography sx={{ textAlign: 'left', m: 2 }}>
-                            Poznań Capricorns
+                            {matchDetails.team_a_name}
                         </Typography>
                     </Grid>
                     {/* Score in the middle */}
@@ -274,7 +327,7 @@ export default function MainLobby() {
                             {/* Team A snitch catch */}
                             <Grid item xs={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <IconButton onClick={() => SnitchCatch("a")}
-                                    aria-label="snitch_catch_A" sx={{ backgroundColor: 'gold', m: 2, '&:hover': { backGroundColor: 'yellow', }, }}>
+                                    aria-label="snitch_catch_A" sx={{ backgroundColor: 'gold', m: 2, '&:hover': { backgroundColor: 'yellow', }, }}>
                                     <SportsGolf />
                                 </IconButton>
                             </Grid>
@@ -284,7 +337,7 @@ export default function MainLobby() {
                                     <ListItem>
                                         <IconButton onClick={() => setTeam_a_score((prevTeam_a_score) => prevTeam_a_score + 10)}
                                             aria-label="add_points_A"
-                                            sx={{ backgroundColor: 'green', m: 1, '&:hover': { backGroundColor: 'darkGreen', }, }}>
+                                            sx={{ backgroundColor: 'green', m: 1, '&:hover': { backgroundColor: 'darkGreen', }, }}>
                                             <AddCircle />
                                         </IconButton>
                                     </ListItem>
@@ -293,7 +346,7 @@ export default function MainLobby() {
                                             if (team_a_score != 0) { setTeam_a_score((prevTeam_a_score) => prevTeam_a_score - 10) }
                                         }}
                                             aria-label="remove_points_A"
-                                            sx={{ backgroundColor: 'red', m: 1, '&:hover': { backGroundColor: 'darkRed', }, }}>
+                                            sx={{ backgroundColor: 'red', m: 1, '&:hover': { backgroundColor: 'darkRed', }, }}>
                                             <RemoveCircle />
                                         </IconButton>
                                     </ListItem>
@@ -309,7 +362,7 @@ export default function MainLobby() {
                                     <ListItem>
                                         <IconButton onClick={() => setTeam_b_score((prevTeam_b_score) => prevTeam_b_score + 10)}
                                             aria-label="add_points_A"
-                                            sx={{ backgroundColor: 'green', m: 1, '&:hover': { backGroundColor: 'darkGreen', }, }}>
+                                            sx={{ backgroundColor: 'green', m: 1, '&:hover': { backgroundColor: 'darkGreen', }, }}>
                                             <AddCircle />
                                         </IconButton>
                                     </ListItem>
@@ -318,7 +371,7 @@ export default function MainLobby() {
                                             if (team_b_score != 0) { setTeam_b_score((prevTeam_b_score) => prevTeam_b_score - 10) }
                                         }}
                                             aria-label="remove_points_A"
-                                            sx={{ backgroundColor: 'red', m: 1, '&:hover': { backGroundColor: 'darkRed', }, }}>
+                                            sx={{ backgroundColor: 'red', m: 1, '&:hover': { backgroundColor: 'darkRed', }, }}>
                                             <RemoveCircle />
                                         </IconButton>
                                     </ListItem>
@@ -327,7 +380,7 @@ export default function MainLobby() {
                             {/* Team B snitch catch */}
                             <Grid item xs={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <IconButton onClick={() => SnitchCatch("b")}
-                                    aria-label="snitch_catch_B" sx={{ backgroundColor: 'gold', m: 2, '&:hover': { backGroundColor: 'yellow', }, }}>
+                                    aria-label="snitch_catch_B" sx={{ backgroundColor: 'gold', m: 2, '&:hover': { backgroundColor: 'yellow', }, }}>
                                     <SportsGolf />
                                 </IconButton>
                             </Grid>
@@ -336,10 +389,22 @@ export default function MainLobby() {
                     <Grid item xs={3}>
                         {/* Team B name, logo and color */}
                         <Typography sx={{ textAlign: 'right', m: 2 }}>
-                            Łódź Pirates
+                        {matchDetails.team_b_name}
                         </Typography>
                     </Grid>
                 </Grid>
+                <Button
+                onClick={initMatchDetails}>
+                    Refresh
+                </Button>
+                <Button
+                onClick={updateBackend}>
+                    Update
+                </Button>
+                <Button
+                onClick={console.log(matchDetailsPUT)}>
+                    con
+                </Button>
             </BorderBox>
 
             {/************************************************** Timer ***************************************************************/}
@@ -542,17 +607,17 @@ export default function MainLobby() {
                             <Grid item xs={3}>
                                 <IconButton
                                     aria-label="blue_card"
-                                    sx={{ backgroundColor: 'lightblue', m: 1, '&:hover': { backGroundColor: 'Blue', }, }}>
+                                    sx={{ backgroundColor: 'lightBlue', m: 1, '&:hover': { backgroundColor: 'Blue', }, }}>
                                     <InsertDriveFile />
                                 </IconButton>
                                 <IconButton
                                     aria-label="yellow_card"
-                                    sx={{ backgroundColor: 'yellow', m: 1, '&:hover': { backGroundColor: 'darkYellow', }, }}>
+                                    sx={{ backgroundColor: 'yellow', m: 1, '&:hover': { backgroundColor: 'gold', }, }}>
                                     <InsertDriveFile />
                                 </IconButton>
                                 <IconButton
                                     aria-label="red_card"
-                                    sx={{ backgroundColor: 'red', m: 1, '&:hover': { backGroundColor: 'darkRed', }, }}>
+                                    sx={{ backgroundColor: 'red', m: 1, '&:hover': { backgroundColor: 'darkRed', }, }}>
                                     <InsertDriveFile />
                                 </IconButton>
                             </Grid>
