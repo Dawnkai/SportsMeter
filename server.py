@@ -132,10 +132,12 @@ def notification(notification_id):
     db.delete_notifiaction(notification_id)
     return jsonify({"msg": "Notifiaction deleted"}), 204
 
-@app.route("/api/matches/", methods=["GET"])
+@app.route("/api/matches/", methods=["GET", "POST"])
 @throws_exception
 def matches():
-    return db.get_matches()
+  if request.method == "POST":
+      return db.add_match(request.json), 201
+  return db.get_matches(), 200
 
 @app.route("/api/matches/<match_id>", methods=["GET", "PUT", "DELETE"])
 @throws_exception

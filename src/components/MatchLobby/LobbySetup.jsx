@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 
 import AddIcon from '@mui/icons-material/Add';
@@ -29,6 +29,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MatchDetails from '../MatchDetails/MatchDetails';
 
 export default function LobbySetup() {
     const [seasons, setSeasons] = useState([]);
@@ -38,16 +39,42 @@ export default function LobbySetup() {
     const [events, setEvents] = useState([]);
     const [teams, setTeams] = useState([]);
     const [addMatchDialogOpen, setAddMatchDialogOpen] = useState(false);
+    const [matchDetailsPOST, setMatchDetailsPOST] = useState(
+        {
+            "match_date": "20230606",
+            "match_start_time": "123000",
+            "match_season": 0,
+            "team_a_id": 0,
+            "team_b_id": 0
+        }
+    );
+
 
     const [teamA, setTeamA] = React.useState('');
     const [teamB, setTeamB] = React.useState('');
 
     const handleTeamA = (event) => {
         setTeamA(event.target.value);
+        setMatchDetailsPOST((prevState) => ({
+            ...prevState,
+            team_a_id: event.target.value,
+        }));
     };
     const handleTeamB = (event) => {
         setTeamB(event.target.value);
+        setMatchDetailsPOST((prevState) => ({
+            ...prevState,
+            team_b_id: event.target.value,
+        }));
     };
+
+    const putMatch = () => {
+        try {
+            const req = axios.post('/api/matches/', matchDetailsPOST);
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
 
     const fetchSeasons = async () => {
@@ -120,6 +147,7 @@ export default function LobbySetup() {
 
     useEffect(() => {
         fetchSeasons();
+        putMatch();
         fetchTeams();
         fetchEvents(0);
         fetchSeasonInfo(0);
@@ -149,13 +177,13 @@ export default function LobbySetup() {
                                         onChange={handleTeamA}
                                     >
                                         {
-                                        teams.length > 0 &&
-                                        teams.map((team, index) => (
-                                            
-                                            <MenuItem value={team?.team_id}>{team?.team_name}</MenuItem>
+                                            teams.length > 0 &&
+                                            teams.map((team, index) => (
 
-                                        ))
-                                    }
+                                                <MenuItem value={team?.team_id}>{team?.team_name}</MenuItem>
+
+                                            ))
+                                        }
                                     </Select>
                                 </FormControl>
                             </Box>
@@ -190,12 +218,30 @@ export default function LobbySetup() {
                             variant="contained"
                             color="success"
                             onClick={
-                                () => navigate(`/lobby/'${match_id}`)
+                                () => putMatch()
                             }>
                             Start Lobby
                         </Button>
                     </Box>
-
+                    <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            onClick={
+                                () => <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        onClick={
+                                            () => navigate(`/lobby/${MatchDetails.match_id}`)
+                                        }>
+                                        Start Lobby
+                                    </Button>
+                                </Box>
+                            }>
+                            Start Lobby FOR REAL THIS TIME
+                        </Button>
+                    </Box>
                 </BorderBox>
             </Grid>
 

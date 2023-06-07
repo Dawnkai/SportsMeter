@@ -285,8 +285,8 @@ class SqliteDriver:
         with SqliteContext(self.dbpath) as [conn, cur]:
             try:
                 cur.execute(f"SELECT " 
-                            f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, t1.team_name,"
-                            f"t2.team_name, m.team_a_points, m.team_b_points "
+                            f"m.match_id, m.match_date, m.match_start_time, m.match_end_time, m.team_a_id,"
+                            f"t1.team_name, m.team_b_id, t2.team_name, m.team_a_points, m.team_b_points "
                             f"FROM Matches m, Teams t1, Teams t2 "
                             f"WHERE m.match_id = {match_id} AND m.team_a_id = t1.team_id AND m.team_b_id = t2.team_id")
             except sqlite3.Error as error:
@@ -298,10 +298,12 @@ class SqliteDriver:
                     "match_date": row[0][1],
                     "match_start_time": row[0][2],
                     "match_end_time": row[0][3],
-                    "team_a_name": row[0][4],
-                    "team_b_name": row[0][5],
-                    "team_a_points": row[0][6],
-                    "team_b_points": row[0][7]
+                    "team_a_id": row[0][4],
+                    "team_a_name": row[0][5],
+                    "team_b_id": row[0][6],
+                    "team_b_name": row[0][7],
+                    "team_a_points": row[0][8],
+                    "team_b_points": row[0][9]
                     }
         return result
 
@@ -328,17 +330,21 @@ class SqliteDriver:
                 "team_b_points": entry[7]} for entry in cur.fetchall()]
         return rows
 
-    def add_match(self, season_id : int, match_data : dict):
+    def add_match(self, match_data : dict):
         with SqliteContext(self.dbpath) as [conn, cur]:
             if self.input_valid(MATCH_FIELDS, match_data):
-                match_data["match_season"] = season_id
+                if "match_id" in match_data:
+                    del match_data["match_id"]
                 try:
                     cur.execute(self.get_insert_query("Matches", match_data))
                     conn.commit()
+                    cur.execute("SELECT match_id FROM Matches ORDER BY match_id LIMIT 1")
+                    res = cur.fetchall()
+                    if len(res) > 0:
+                        return self.get_match(res[0][0])
                 except sqlite3.Error as error:
                     raise InvalidQueryError(f"Error while adding new match: {error}")
-                return True
-        return False
+        return {}
     
     def edit_match(self, match_id : int, match_data : dict):
         with SqliteContext(self.dbpath) as [conn, cur]:
