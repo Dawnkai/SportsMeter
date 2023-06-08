@@ -10,7 +10,7 @@ import MainPage from './components/MainPage/MainPage';
 import MatchDetails from './components/MatchDetails/MatchDetails';
 import NavigationBar from './components/NavigationBar';
 import MainLobby from './components/MatchLobby/MainLobby';
-//import LobbySetup from './components/MatchLobby/LobbySetup';
+import LobbySetup from './components/MatchLobby/LobbySetup';
 //import SignInPage from './components/Login/SignInPage';
 //import SignUpPage from './components/Login/SignUpPage';
 
@@ -39,6 +39,7 @@ const Copyright = () => {
 }
 //<Route path="/login" element={<SignInPage/>}/>
 //<Route path="/register" element={<SignUpPage/>}/> add after matchDetails element
+//<Route path="/setlobby" element={<LobbySetup/>}/>
 const App = () => {
     return (
         <ThemeProvider theme={theme}>
@@ -48,8 +49,8 @@ const App = () => {
                 <Routes>
                     <Route exact path="/" element={<MainPage/>}/>
                     <Route path="/matches/:match_id" element={<MatchDetails/>}/>
-                    <Route path="/lobby" element={<MainLobby/>}/>
-
+                    <Route path="/lobby/:match_id" element={<MainLobby/>}/>
+                    <Route path="/setlobby" element={<LobbySetup/>}/>
                 </Routes>
             </BrowserRouter>
             <Copyright/>

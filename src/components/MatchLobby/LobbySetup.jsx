@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-
 import axios from 'axios';
+import { Navigate, useNavigate } from 'react-router-dom';
+
 
 import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
@@ -18,17 +18,18 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import AddMatchDialog from './AddMatchDialog';
-import EventItem from './EventItem';
-import MatchItem from './MatchItem';
-import MainLobby from './MainLobby';
+import AddMatchDialog from '../MainPage/AddMatchDialog';
+import EventItem from '../MainPage/EventItem';
+import MatchItem from '../MainPage/MatchItem';
+import MainLobby from '../MatchLobby/MainLobby';
 import { grey } from '@mui/material/colors';
-import { BorderColor } from '@mui/icons-material';
+import { BorderColor, CenterFocusStrong } from '@mui/icons-material';
 
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MatchDetails from '../MatchDetails/MatchDetails';
 
 export default function LobbySetup() {
     const [seasons, setSeasons] = useState([]);
@@ -36,7 +37,45 @@ export default function LobbySetup() {
     const [matches, setMatches] = useState([]);
     const [highscore, setHighscore] = useState([]);
     const [events, setEvents] = useState([]);
+    const [teams, setTeams] = useState([]);
     const [addMatchDialogOpen, setAddMatchDialogOpen] = useState(false);
+    const [matchDetailsPOST, setMatchDetailsPOST] = useState(
+        {
+            "match_date": "20230606",
+            "match_start_time": "123000",
+            "match_season": 0,
+            "team_a_id": 0,
+            "team_b_id": 0
+        }
+    );
+
+
+    const [teamA, setTeamA] = React.useState('');
+    const [teamB, setTeamB] = React.useState('');
+
+    const handleTeamA = (event) => {
+        setTeamA(event.target.value);
+        setMatchDetailsPOST((prevState) => ({
+            ...prevState,
+            team_a_id: event.target.value,
+        }));
+    };
+    const handleTeamB = (event) => {
+        setTeamB(event.target.value);
+        setMatchDetailsPOST((prevState) => ({
+            ...prevState,
+            team_b_id: event.target.value,
+        }));
+    };
+
+    const putMatch = () => {
+        try {
+            const req = axios.post('/api/matches/', matchDetailsPOST);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
 
     const fetchSeasons = async () => {
         try {
@@ -56,7 +95,7 @@ export default function LobbySetup() {
         }
     }
 
-    {/**check axios documentation*/}
+    {/**check axios documentation*/ }
     const fetchSeasonInfo = (seasonId) => {
         if (seasonId === null) return;
         try {
@@ -67,6 +106,15 @@ export default function LobbySetup() {
                 setHighscore(response?.data);
             });
             setSelectedSeason(seasonId);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const fetchTeams = async () => {
+        try {
+            const result = await axios.get('/api/teams/');
+            setTeams(result?.data);
         } catch (error) {
             console.log(error);
         }
@@ -87,7 +135,7 @@ export default function LobbySetup() {
                     border: '1px solid',
                     borderRadius: '4px',
                     borderColor: 'lightgrey',
-                    padding: '12px',
+                    padding: '42px',
                     mt: 2,
                     mb: 2,
                 }}
@@ -99,6 +147,8 @@ export default function LobbySetup() {
 
     useEffect(() => {
         fetchSeasons();
+        putMatch();
+        fetchTeams();
         fetchEvents(0);
         fetchSeasonInfo(0);
     }, []);
@@ -106,9 +156,99 @@ export default function LobbySetup() {
     const navigate = useNavigate();
 
     return (
-        
-        <BorderBox m={4}>
-            <Typography>Hi world!</Typography>
-        </BorderBox>
+
+        <Grid container spacing={3}>
+            <Grid item xs={3}>
+
+            </Grid>
+
+            <Grid item xs={6}>
+                <BorderBox>
+                    <Grid container spacing={3}>
+                        <Grid xs={5}>
+                            <Box sx={{ minWidth: 80 }}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="demo-simple-select-label2">Team A</InputLabel>
+                                    <Select
+                                        labelId="demo-simple-select-label2"
+                                        id="demo-simple-select2"
+                                        value={teamA}
+                                        label="Team A"
+                                        onChange={handleTeamA}
+                                    >
+                                        {
+                                            teams.length > 0 &&
+                                            teams.map((team, index) => (
+
+                                                <MenuItem value={team?.team_id}>{team?.team_name}</MenuItem>
+
+                                            ))
+                                        }
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        </Grid>
+                        <Grid xs={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography sx>VS</Typography>
+                        </Grid>
+                        <Grid xs={5}>
+                            <FormControl fullWidth>
+                                <InputLabel id="demo-simple-select-label2">Team B</InputLabel>
+                                <Select
+                                    labelId="demo-simple-select-label2"
+                                    id="demo-simple-select2"
+                                    value={teamB}
+                                    label="Team B"
+                                    onChange={handleTeamB}
+                                >
+                                    {
+                                        teams.length > 0 &&
+                                        teams.map((team, index) => (
+                                            /*team?.team_name !== teamB && team?.team_name !== teamA &&*/
+                                            <MenuItem value={team?.team_id}>{team?.team_name}</MenuItem>
+
+                                        ))
+                                    }
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                    </Grid>
+                    <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            onClick={
+                                () => putMatch()
+                            }>
+                            Start Lobby
+                        </Button>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            onClick={
+                                () => <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        onClick={
+                                            () => navigate(`/lobby/${MatchDetails.match_id}`)
+                                        }>
+                                        Start Lobby
+                                    </Button>
+                                </Box>
+                            }>
+                            Start Lobby FOR REAL THIS TIME
+                        </Button>
+                    </Box>
+                </BorderBox>
+            </Grid>
+
+            <Grid item xs={3}>
+
+            </Grid>
+        </Grid>
+
     )
 }
