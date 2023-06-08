@@ -61,20 +61,10 @@ export default function MainLobby() {
             "match_start_time": "", "match_end_time": ""
         }
     );
-    const [matchDetailsPUT, setMatchDetailsPUT] = useState(
-        {
-            "match_id": 0,
-            "match_date": "",
-            "match_start_time":"",
-            "match_end_time":"",
-            "match_season":0,
-            "team_a_id":0,
-            "team_b_id":0,
-            "team_a_points":0,
-            "team_b_points":0
-        }
-    );
-    const [team_a_score, setTeam_a_score] = useState(0); //add if statement for <0
+    const [MatchPlayers, setMatchPlayers] = useState([]);
+
+    const [MatchPlayersStats, setMatchPlayersStats] = useState([])
+    const [team_a_score, setTeam_a_score] = useState(0); 
     const [team_b_score, setTeam_b_score] = useState(0);
 
     // List to select players
@@ -89,7 +79,7 @@ export default function MainLobby() {
     };
 
     //Popper for statistics
-    const [anchorEl, setAnchorEl] = useState(null);
+    const [anchorEl, setAnchorEl] = useState();
     const [open, setOpen] = useState(false);
     const [placement, setPlacement] = useState();
 
@@ -136,8 +126,6 @@ export default function MainLobby() {
         /* update matchDetails*/
         matchDetails.team_a_points = team_a_score;
         matchDetails.team_a_points = team_a_score;
-        matchDetailsPUT.team_a_points = team_a_score;
-        matchDetailsPUT.team_a_points = team_a_score;
 
 
         /* Put data on backend*/
@@ -152,8 +140,29 @@ export default function MainLobby() {
 
     }
     
+    const fetchMatchPlayers = async () =>{
+        try {
+            const result = await axios.get(`/api/matches/${match_id}/players`);
+            setMatchPlayers(result?.data);
+            console.log(result?.data)
+        }
+        catch (error) {
+            console.log(error);
+    }
+    }
 
-    /*const fetchTeams = async () => {
+    const fetchPlayer = async (player_id) =>{
+        try {
+            const result = await axios.get(`/api/players/${player_id}`);
+            return(result?.data);
+        }
+        catch (error) {
+            console.log(error);
+    }
+
+    }
+
+    /*const fetchTeams =  async () => {
         try {
             const result = await axios('/api/teams');
             setSeasons(result?.data);
@@ -168,20 +177,20 @@ export default function MainLobby() {
         return { number, name, gender, shotsSuc, shots, passesSuc, passes, tacklesSuc, tackles, defensesSuc, defenses, turnoversSuc, turnovers, beatsSuc, beats, catchesSuc, catches };
     }
 
-    const rows = [
-        createData(12, 'Jan Nowak', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        createData(5, 'Joanna Kowalska', 'K', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        createData(2, 'Marcin Cośtam', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        createData(5, 'Michał Darkowski', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        createData(22, 'Anna Mowrońska', 'NB', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        createData(42, 'Aleksandra Mostewska', 'K', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-    ];
+    function createTeam(teamArray)
+    {
+        const teamOutput = [];
+        for (let i = 0; i < teamArray.length; i++) {
+            player = fetchPlayer(teamArray[i].match_player_id);
+            teamOutput[i] = createData(player.player_id,player.player_name,player.player_gender, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+        return teamOutput;
+    }
+    const getTeams = () =>
+    {
+        setMatchPlayersStats(createTeam(MatchPlayers));
+    } 
 
-
-
-
-
-    
 
     const BorderBox = ({ children }) => {
         return (
@@ -242,6 +251,7 @@ export default function MainLobby() {
     useEffect(() => {
         SnitchCatch();
         fetchMatchDetails();
+        fetchMatchPlayers();
         initMatchDetails();
     }, []);
 
@@ -400,10 +410,6 @@ export default function MainLobby() {
                 onClick={updateBackend}>
                     Update
                 </Button>
-                <Button
-                onClick={console.log(matchDetailsPUT)}>
-                    con
-                </Button>
             </BorderBox>
 
             {/************************************************** Timer ***************************************************************/}
@@ -413,6 +419,21 @@ export default function MainLobby() {
 
             {/*********************************************** Statistics ***********************************************************************/}
             <BorderBox>
+            <BorderBox>
+                {/* testing */
+                MatchPlayers.map((row, index) => (
+
+
+                    <Typography>{row?.player_id}kglglg</Typography>
+
+                ))
+                }k
+                
+            <Button
+            onClick={fetchMatchPlayers}>
+                    Update
+                </Button>
+            </BorderBox>
                 <TableContainer component={Paper}>
                     <Table sx={{ minWidth: 650 }} aria-label="simple table">
                         <TableHead>
@@ -428,7 +449,7 @@ export default function MainLobby() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {rows.map((row) => (
+                            {MatchPlayersStats.map((row) => (
                                 <TableRow
                                     key={row.name}
                                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}

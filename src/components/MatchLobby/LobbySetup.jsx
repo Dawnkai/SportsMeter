@@ -228,17 +228,8 @@ export default function LobbySetup() {
                             variant="contained"
                             color="success"
                             onClick={
-                                () => <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
-                                    <Button
-                                        variant="contained"
-                                        color="success"
-                                        onClick={
                                             () => navigate(`/lobby/${MatchDetails.match_id}`)
                                         }>
-                                        Start Lobby
-                                    </Button>
-                                </Box>
-                            }>
                             Start Lobby FOR REAL THIS TIME
                         </Button>
                     </Box>

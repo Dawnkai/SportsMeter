@@ -155,7 +155,7 @@ def match(match_id):
 @app.route("/api/matches/<match_id>/players", methods=["GET", "POST"])
 @throws_exception
 def match_players(match_id):
-    if request.mathod == "POST":
+    if request.method == "POST":
         if "player_id" not in request.json:
             raise InvalidInputError("Player ID not provided.")
         db.add_match_player(match_id, request.json["player_id"])
