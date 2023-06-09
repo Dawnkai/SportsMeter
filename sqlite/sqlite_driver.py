@@ -63,6 +63,7 @@ class SqliteDriver:
         self.insert_from_csv("Matches", f"{data_directory}/matches.csv", ";")
         self.insert_from_csv("Notifications", f"{data_directory}/notifications.csv", ";")
         self.insert_from_csv("Players", f"{data_directory}/players.csv", ";")
+        self.insert_from_csv("Match_Players", f"{data_directory}/match_players.csv", ";")
     
     def get_insert_query(self, table : str, data : dict):
         insert_query = f"INSERT INTO {table} ("

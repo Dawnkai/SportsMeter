@@ -17,7 +17,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import ButtonIcons from '@mui/icons-material'
+import ButtonIcons, { FunctionsOutlined } from '@mui/icons-material'
 import DeleteIcon from '@mui/icons-material/Delete';
 import SportsGolf from '@mui/icons-material/SportsGolf';
 import AddCircle from '@mui/icons-material/AddCircle';
@@ -64,12 +64,14 @@ export default function MainLobby() {
     const [MatchPlayers, setMatchPlayers] = useState([]);
 
     const [MatchPlayersStats, setMatchPlayersStats] = useState([])
-    const [team_a_score, setTeam_a_score] = useState(0); 
+    const [team_a_score, setTeam_a_score] = useState(0);
     const [team_b_score, setTeam_b_score] = useState(0);
 
     // List to select players
     const [sub, setSub] = React.useState('');
     const [subFor, setSubFor] = React.useState('');
+    //substitutions
+    const [Substitutions, setSubstitutions] = useState([]);
 
     const handleSub = (event) => {
         setSub(event.target.value);
@@ -77,32 +79,6 @@ export default function MainLobby() {
     const handleSubFor = (event) => {
         setSubFor(event.target.value);
     };
-
-    //Popper for statistics
-    const [anchorEl, setAnchorEl] = useState();
-    const [open, setOpen] = useState(false);
-    const [placement, setPlacement] = useState();
-
-    const handlePopperClick = (newPlacement) => (event) => {
-
-        setAnchorEl(event.currentTarget);
-        setOpen((prev) => placement !== newPlacement || !prev);
-        setPlacement(newPlacement);
-    }
-
-    const handlePopperClose = (event) => {
-        setAnchorEl(null);
-    }
-
-    const SnitchCatch = (team_snitch) => {
-        if (team_snitch == "a") {
-            setTeam_a_score((prevTeam_a_score) => prevTeam_a_score + 30);
-        }
-        else if (team_snitch == "b") {
-            setTeam_b_score((prevTeam_b_score) => prevTeam_b_score + 30);
-        }
-        return false;
-    }
 
     const fetchMatchDetails = async () => {
         try {
@@ -116,13 +92,13 @@ export default function MainLobby() {
     }
 
 
-    const initMatchDetails =  () => {
+    const initMatchDetails = () => {
         setTeam_a_score(matchDetails.team_a_points);
         setTeam_b_score(matchDetails.team_b_points);
     }
 
 
-    const updateBackend =  () => {
+    const updateBackend = () => {
         /* update matchDetails*/
         matchDetails.team_a_points = team_a_score;
         matchDetails.team_a_points = team_a_score;
@@ -130,7 +106,7 @@ export default function MainLobby() {
 
         /* Put data on backend*/
         try {
-            const res = axios.put(`/api/matches/${match_id}`, {"match_id":matchDetails.id, "team_a_points":matchDetails.team_a_points, "team_b_points":matchDetails.team_b_points});
+            const res = axios.put(`/api/matches/${match_id}`, { "match_id": matchDetails.id, "team_a_points": matchDetails.team_a_points, "team_b_points": matchDetails.team_b_points });
         }
         catch (error) {
             console.log(error);
@@ -139,8 +115,8 @@ export default function MainLobby() {
 
 
     }
-    
-    const fetchMatchPlayers = async () =>{
+
+    const fetchMatchPlayers = async () => {
         try {
             const result = await axios.get(`/api/matches/${match_id}/players`);
             setMatchPlayers(result?.data);
@@ -148,17 +124,26 @@ export default function MainLobby() {
         }
         catch (error) {
             console.log(error);
-    }
+        }
     }
 
-    const fetchPlayer = async (player_id) =>{
+    /*function postMatchPlayers(dataPUT){
         try {
-            const result = await axios.get(`/api/players/${player_id}`);
-            return(result?.data);
+            const putData = axios.post(`/api/matches/${match_id}/players`, dataPUT);
         }
         catch (error) {
             console.log(error);
-    }
+        }
+    }*/
+
+    const fetchPlayer = async (player_id) => {
+        try {
+            const result = await axios.get(`/api/players/${player_id}`);
+            return (result?.data);
+        }
+        catch (error) {
+            console.log(error);
+        }
 
     }
 
@@ -173,24 +158,41 @@ export default function MainLobby() {
     */
 
     /* DATA FOR STATISTICS: */
-    function createData(number, name, gender, shotsSuc, shots, passesSuc, passes, tacklesSuc, tackles, defensesSuc, defenses, turnoversSuc, turnovers, beatsSuc, beats, catchesSuc, catches) {
-        return { number, name, gender, shotsSuc, shots, passesSuc, passes, tacklesSuc, tackles, defensesSuc, defenses, turnoversSuc, turnovers, beatsSuc, beats, catchesSuc, catches };
+    function createData(active, number, name, gender, shotsSuc, shots, passesSuc, passes, tacklesSuc, tackles, defensesSuc, defenses, turnoversSuc, turnovers, beatsSuc, beats, catchesSuc, catches) {
+        return { active, number, name, gender, shotsSuc, shots, passesSuc, passes, tacklesSuc, tackles, defensesSuc, defenses, turnoversSuc, turnovers, beatsSuc, beats, catchesSuc, catches };
     }
 
-    function createTeam(teamArray)
-    {
-        const teamOutput = [];
+    async function createTeam(teamArray) {
+        teamOutput = [];
         for (let i = 0; i < teamArray.length; i++) {
-            player = fetchPlayer(teamArray[i].match_player_id);
-            teamOutput[i] = createData(player.player_id,player.player_name,player.player_gender, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            await fetchPlayer(teamArray[i].match_player).then((player) => {
+                if (player) {
+                    teamOutput[i] = createData(teamArray[i].player_active, player.player_id, player.player_name, player.player_gender, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+                    console.log(teamOutput[i]);
+                }
+            })
         }
         return teamOutput;
     }
-    const getTeams = () =>
-    {
-        setMatchPlayersStats(createTeam(MatchPlayers));
-    } 
+    const getTeams = async () => {
+        setMatchPlayersStats(await createTeam(MatchPlayers));
+    }
 
+    function SnitchCatch(team_snitch) {
+        if (team_snitch == "a") {
+            setTeam_a_score((prevTeam_a_score) => prevTeam_a_score + 30);
+        }
+        else if (team_snitch == "b") {
+            setTeam_b_score((prevTeam_b_score) => prevTeam_b_score + 30);
+        }
+        return false;
+    }
+
+    function GetPlayer(number)
+    {
+        const statIndex = MatchPlayersStats.findIndex(stat => stat.number === number)
+        return MatchPlayersStats[statIndex].name;
+    }
 
     const BorderBox = ({ children }) => {
         return (
@@ -208,7 +210,93 @@ export default function MainLobby() {
         );
     }
 
-    const ButtonAction = ({ children }) => {
+    const ButtonAction = ({ children, row, type }) => {
+        //Popper for statistics
+        const [anchorEl, setAnchorEl] = useState();
+        const [open, setOpen] = useState(false);
+        const [placement, setPlacement] = useState();
+
+        const handlePopperClick = (newPlacement) => (event) => {
+            console.log("handlePopperClick ");
+            setAnchorEl(event.currentTarget);
+            setOpen((prev) => placement !== newPlacement || !prev);
+            setPlacement(newPlacement);
+        }
+
+        const handlePopperClose = (event) => {
+            setAnchorEl(null);
+        }
+
+        const HandleClickGood = () => {
+            setMatchPlayersStats(prevStats => {
+                const updatedStats = [...prevStats];
+                const statIndex = updatedStats.findIndex(stat => stat.name === row.name);
+                console.log(row);
+                console.log(row.name);
+                console.log(statIndex);
+                console.log(updatedStats[statIndex].shots);
+                if (type == "shots") {
+                    updatedStats[statIndex].shots += 1;
+                    updatedStats[statIndex].shotsSuc += 1;
+                }
+                else if (type == "passes") {
+                    updatedStats[statIndex].passes += 1;
+                    updatedStats[statIndex].passesSuc += 1;
+                }
+                else if (type == "tackles") {
+                    updatedStats[statIndex].tackles += 1;
+                    updatedStats[statIndex].tacklesSuc += 1;
+                }
+                else if (type == "defenses") {
+                    updatedStats[statIndex].defenses += 1;
+                    updatedStats[statIndex].defensesSuc += 1;
+                }
+                else if (type == "turnovers") {
+                    updatedStats[statIndex].turnovers += 1;
+                    updatedStats[statIndex].turnoversSuc += 1;
+                }
+                else if (type == "beats") {
+                    updatedStats[statIndex].beats += 1;
+                    updatedStats[statIndex].beatsSuc += 1;
+                }
+                else if (type == "catches") {
+                    updatedStats[statIndex].catches += 1;
+                    updatedStats[statIndex].catchesSuc += 1;
+                }
+                return updatedStats;
+            });
+        };
+
+        const HandleClickBad = () => {
+            setMatchPlayersStats(prevStats => {
+                const updatedStats = [...prevStats];
+                const statIndex = updatedStats.findIndex(stat => stat.name === row.name);
+                if (type == "shots") {
+                    updatedStats[statIndex].shots += 1;
+                }
+                else if (type == "passes") {
+                    updatedStats[statIndex].passes += 1;
+                }
+                else if (type == "tackles") {
+                    updatedStats[statIndex].tackles += 1;
+                }
+                else if (type == "defenses") {
+                    updatedStats[statIndex].defenses += 1;
+                }
+                else if (type == "turnovers") {
+                    updatedStats[statIndex].turnovers += 1;
+                }
+                else if (type == "beats") {
+                    updatedStats[statIndex].beats += 1;
+                }
+                else if (type == "catches") {
+                    updatedStats[statIndex].catches += 1;
+                }
+
+                return updatedStats;
+            });
+        };
+
         return (
             <>
 
@@ -229,11 +317,13 @@ export default function MainLobby() {
                 >
                     <Paper>
                         <IconButton
-                            aria-label="fail" sx={{ backgroundColor: 'red', m: 2, '&:hover': { backgroundColor: 'darkRed', }, }}>
+                            aria-label="fail" sx={{ backgroundColor: 'red', m: 2, '&:hover': { backgroundColor: 'darkRed', }, }}
+                            onClick={HandleClickBad}>
                             <Cancel />
                         </IconButton>
                         <IconButton
-                            aria-label="success" sx={{ backgroundColor: 'green', m: 2, '&:hover': { backgroundColor: 'darkGreen', }, }}>
+                            aria-label="success" sx={{ backgroundColor: 'green', m: 2, '&:hover': { backgroundColor: 'darkGreen', }, }}
+                            onClick={HandleClickGood}>
                             <CheckCircle />
                         </IconButton>
                     </Paper>
@@ -246,6 +336,35 @@ export default function MainLobby() {
         );
     }
 
+
+    const SubstitutionElement = ({ SubPlayer, Player }) => {
+        return(
+        <Grid container spacing={4} sx={{ paddingLeft: "16px" }}>
+            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+               {console.log("is it me you're looking for?")}
+               {console.log(SubPlayer)}
+                <Typography>
+                    {SubPlayer}
+                </Typography>
+
+            </Grid>
+            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                -
+            </Grid>
+            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography>
+                    {Player}
+                </Typography>
+            </Grid>
+            <Grid item xs={3}>
+                <Button sx={{ color: 'blue', fontSize: 10 }}>
+                    cancel substitution
+                </Button>
+            </Grid>
+        </Grid>
+        )
+    }
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -253,6 +372,7 @@ export default function MainLobby() {
         fetchMatchDetails();
         fetchMatchPlayers();
         initMatchDetails();
+        getTeams();
     }, []);
 
     return (
@@ -398,16 +518,16 @@ export default function MainLobby() {
                     <Grid item xs={3}>
                         {/* Team B name, logo and color */}
                         <Typography sx={{ textAlign: 'right', m: 2 }}>
-                        {matchDetails.team_b_name}
+                            {matchDetails.team_b_name}
                         </Typography>
                     </Grid>
                 </Grid>
                 <Button
-                onClick={initMatchDetails}>
+                    onClick={initMatchDetails}>
                     Refresh
                 </Button>
                 <Button
-                onClick={updateBackend}>
+                    onClick={updateBackend}>
                     Update
                 </Button>
             </BorderBox>
@@ -419,21 +539,12 @@ export default function MainLobby() {
 
             {/*********************************************** Statistics ***********************************************************************/}
             <BorderBox>
-            <BorderBox>
-                {/* testing */
-                MatchPlayers.map((row, index) => (
-
-
-                    <Typography>{row?.player_id}kglglg</Typography>
-
-                ))
-                }k
-                
-            <Button
-            onClick={fetchMatchPlayers}>
-                    Update
-                </Button>
-            </BorderBox>
+                <BorderBox>
+                    <Button
+                        onClick={getTeams}>
+                        Update
+                    </Button>
+                </BorderBox>
                 <TableContainer component={Paper}>
                     <Table sx={{ minWidth: 650 }} aria-label="simple table">
                         <TableHead>
@@ -450,6 +561,7 @@ export default function MainLobby() {
                         </TableHead>
                         <TableBody>
                             {MatchPlayersStats.map((row) => (
+                                row.active !== false &&
                                 <TableRow
                                     key={row.name}
                                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
@@ -462,49 +574,63 @@ export default function MainLobby() {
                                         {row.gender}
                                     </TableCell>
                                     <TableCell align="center">
-                                        <ButtonAction>
+                                        <ButtonAction
+                                            row={row}
+                                            type="shots">
                                             {row.shotsSuc}
                                             {" / "}
                                             {row.shots}
                                         </ButtonAction>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <ButtonAction>
+                                        <ButtonAction
+                                            row={row}
+                                            type="passes">
                                             {row.passesSuc}
                                             {" / "}
                                             {row.passes}
                                         </ButtonAction>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <ButtonAction>
+                                        <ButtonAction
+                                            row={row}
+                                            type="tackles">
                                             {row.tacklesSuc}
                                             {" / "}
                                             {row.tackles}
                                         </ButtonAction>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <ButtonAction>
+                                        <ButtonAction
+                                            row={row}
+                                            type="defenses">
                                             {row.defensesSuc}
                                             {" / "}
                                             {row.defenses}
                                         </ButtonAction>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <ButtonAction>
+                                        <ButtonAction
+                                            row={row}
+                                            type="turnovers">
                                             {row.turnoversSuc}
                                             {" / "}
                                             {row.turnovers}
                                         </ButtonAction>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <ButtonAction>
+                                        <ButtonAction
+                                            row={row}
+                                            type="beats">
                                             {row.beatsSuc}
                                             {" / "}
                                             {row.beats}
                                         </ButtonAction>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <ButtonAction>
+                                        <ButtonAction
+                                            row={row}
+                                            type="catches">
                                             {row.catchesSuc}
                                             {" / "}
                                             {row.catches}
@@ -537,38 +663,14 @@ export default function MainLobby() {
                             </Grid>
                         </Grid>
                         <Divider />
-                        <Grid container spacing={4} sx={{ paddingLeft: "16px" }}>
-                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                                Player 1
-                            </Grid>
-                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                                -
-                            </Grid>
-                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                                Player 2
-                            </Grid>
-                            <Grid item xs={3}>
-                                <Button sx={{ color: 'blue', fontSize: 10 }}>
-                                    cancel substitution
-                                </Button>
-                            </Grid>
-                        </Grid>
-                        <Grid container spacing={4} sx={{ paddingLeft: "16px" }}>
-                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                                Player 5
-                            </Grid>
-                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                                -
-                            </Grid>
-                            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                                Player 6
-                            </Grid>
-                            <Grid item xs={3}>
-                                <Button sx={{ color: 'blue', fontSize: 10 }}>
-                                    cancel substitution
-                                </Button>
-                            </Grid>
-                        </Grid>
+                        {
+                            Substitutions.map((Substitutions, index) => (
+                                <SubstitutionElement
+                                    SubPlayer={Substitutions?.nameSub}
+                                    Player={Substitutions?.namePlayer}>
+                                </SubstitutionElement>
+                            ))
+                        }
                         <Divider />
                         <Grid container spacing={2} m={0}>
                             <Grid item xs={4}>
@@ -582,14 +684,17 @@ export default function MainLobby() {
                                             label="Substitution"
                                             onChange={handleSub}
                                         >
-                                            <MenuItem value={10}>Player 1</MenuItem>
-                                            <MenuItem value={20}>Player 2</MenuItem>
-                                            <MenuItem value={30}>Player 3</MenuItem>
+                                            {
+                                                MatchPlayersStats.map((MatchPlayersStats, index) => (
+                                                    MatchPlayersStats?.active == false &&
+                                                    <MenuItem value={MatchPlayersStats?.number}>{MatchPlayersStats?.name}</MenuItem>
+                                                ))
+                                            }
                                         </Select>
                                     </FormControl>
                                 </Box>
-                                </Grid>
-                                <Grid item xs={4}>
+                            </Grid>
+                            <Grid item xs={4}>
                                 <Box sx={{ minWidth: 80 }}>
                                     <FormControl fullWidth>
                                         <InputLabel id="demo-simple-select-label2">Player</InputLabel>
@@ -600,9 +705,12 @@ export default function MainLobby() {
                                             label="Player"
                                             onChange={handleSubFor}
                                         >
-                                            <MenuItem value={10}>Player 5</MenuItem>
-                                            <MenuItem value={20}>Player 6</MenuItem>
-                                            <MenuItem value={30}>Player 7</MenuItem>
+                                            {
+                                                MatchPlayersStats.map((MatchPlayersStats, index) => (
+                                                    MatchPlayersStats?.active == true &&
+                                                    <MenuItem value={MatchPlayersStats?.number}>{MatchPlayersStats?.name}</MenuItem>
+                                                ))
+                                            }
                                         </Select>
                                     </FormControl>
                                 </Box>
@@ -610,7 +718,20 @@ export default function MainLobby() {
                             <Grid item xs={4} sx={{ display: 'flex', justifyContent: 'right', paddingRight: '76px' }}>
                                 <Button
                                     variant="contained"
-                                    color="success">
+                                    color="success"
+                                    onClick={() => {
+                                        if (sub !== null && subFor !== null) {
+                                            console.log("hello");
+                                            setSubstitutions([...Substitutions, {
+                                                nameSub: GetPlayer(sub),
+                                                numberSub: sub,
+                                                namePlayer: GetPlayer(subFor),
+                                                numberPlayer: subFor,
+                                                //active:sub.active,
+                                            },])
+                                        }
+
+                                    }}>
                                     New Substitution
                                 </Button>
                             </Grid>
