@@ -63,16 +63,23 @@ export default function Stopwatch() {
   };
   return (
     <Box>
-      <Typography sx={'text-align: center, color: #fff, font-size: 80px;'}>
+      <Typography sx={'text-align: center, color: #fff, font-size: 120px;'}
+      fontSize={72}>
         {hours}:{minutes.toString().padStart(2, "0")}:
         {seconds.toString().padStart(2, "0")}:
         {milliseconds.toString().padStart(2, "0")}
       </Typography>
-      <Box sx={'display: flex, justify-content: center'}>
-        <Button onClick={startAndStop} sx={'margin: 20px, border: none,  padding: 10px 30px, cursor: pointer, color: #fff;'}>
+      <Box direction="column"
+      alignItems="center"
+      justify="center">
+        <Button onClick={startAndStop} sx={'margin: 20px, border: none,  padding: 10px 30px, cursor: pointer, color: green;'}
+        variant = "contained">
           {isRunning ? "Stop" : "Start"}
         </Button>
-        <Button onClick={reset}>
+        <Button 
+        variant="contained"
+        color="error"
+        onClick={reset}>
           Reset
         </Button>
       </Box>

@@ -98,7 +98,7 @@ export default function MainLobby() {
     }
 
 
-    const updateBackend = () => {
+    const UpdateBackendPoints = () => {
         /* update matchDetails*/
         matchDetails.team_a_points = team_a_score;
         matchDetails.team_a_points = team_a_score;
@@ -188,8 +188,7 @@ export default function MainLobby() {
         return false;
     }
 
-    function GetPlayer(number)
-    {
+    function GetPlayer(number) {
         const statIndex = MatchPlayersStats.findIndex(stat => stat.number === number)
         return MatchPlayersStats[statIndex].name;
     }
@@ -336,32 +335,78 @@ export default function MainLobby() {
         );
     }
 
+    const ExecuteSubstitutions = () => {
+        /* update matchPlayers*/
+        console.log("hi");
+        setMatchPlayersStats((prevMatchPlayersStats) => {
+            const updatedMatchPlayerStats = [...prevMatchPlayersStats];
+            console.log(updatedMatchPlayerStats);
+            for (let index = 0; index < Substitutions.length; index++) {
+                const substitution = Substitutions[index];
+
+                const playerIndex = updatedMatchPlayerStats.findIndex(playerIndex => playerIndex.number === substitution.numberPlayer);
+                const subIndex = updatedMatchPlayerStats.findIndex(subIndex => subIndex.number === substitution.numberSub);
+                
+
+                console.log(playerIndex,substitution.numberPlayer);
+                console.log(subIndex,substitution.numberSub);
+                updatedMatchPlayerStats[playerIndex].active = !updatedMatchPlayerStats[playerIndex].active;
+                updatedMatchPlayerStats[subIndex].active = !updatedMatchPlayerStats[subIndex].active;
+                
+                console.log(updatedMatchPlayerStats);
+            }
+            return updatedMatchPlayerStats;
+        });
+
+
+        setSubstitutions((prevSubs) => {
+            const updatedSubs = [...prevSubs];
+        
+            for (let index = updatedSubs.length - 1; index >= 0; index--) {
+              updatedSubs.splice(index, 1);
+            }
+        
+            return updatedSubs;
+          });
+        /* Put data on backend - No put call for matchplayers on the backend*/
+
+    }
+
+    const RemoveFromSubstitutions = (Player) => {
+        setSubstitutions(prevSubs => {
+            const updatedSubs = [...prevSubs];
+            const subIndex = updatedSubs.findIndex(sub => sub.namePlayer === Player);
+            updatedSubs.splice(subIndex, 1);
+            return updatedSubs;
+        })
+    }
 
     const SubstitutionElement = ({ SubPlayer, Player }) => {
-        return(
-        <Grid container spacing={4} sx={{ paddingLeft: "16px" }}>
-            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-               {console.log("is it me you're looking for?")}
-               {console.log(SubPlayer)}
-                <Typography>
-                    {SubPlayer}
-                </Typography>
+        return (
+            <Grid container spacing={4} sx={{ paddingLeft: "16px" }}>
+                <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                    {console.log("is it me you're looking for?")}
+                    {console.log(SubPlayer)}
+                    <Typography>
+                        {SubPlayer}
+                    </Typography>
 
+                </Grid>
+                <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                    -
+                </Grid>
+                <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography>
+                        {Player}
+                    </Typography>
+                </Grid>
+                <Grid item xs={3}>
+                    <Button sx={{ color: 'blue', fontSize: 10 }}
+                        onClick={() => RemoveFromSubstitutions(Player)}>
+                        cancel substitution
+                    </Button>
+                </Grid>
             </Grid>
-            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                -
-            </Grid>
-            <Grid item xs={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography>
-                    {Player}
-                </Typography>
-            </Grid>
-            <Grid item xs={3}>
-                <Button sx={{ color: 'blue', fontSize: 10 }}>
-                    cancel substitution
-                </Button>
-            </Grid>
-        </Grid>
         )
     }
 
@@ -527,14 +572,25 @@ export default function MainLobby() {
                     Refresh
                 </Button>
                 <Button
-                    onClick={updateBackend}>
+                    onClick={UpdateBackendPoints}>
                     Update
                 </Button>
             </BorderBox>
 
             {/************************************************** Timer ***************************************************************/}
-            <BorderBox>
-                <Stopwatch />
+            <BorderBox justifyContent="center" alignItems="center">
+                <Grid container spacing={3}>
+                    <Grid item xs={4}>
+
+                    </Grid>
+                    <Grid item xs={6} justifyContent="center" alignItems="center">
+                    <Stopwatch />
+                    </Grid>
+                    <Grid item xs={3}>
+
+                    </Grid>
+                </Grid>
+                
             </BorderBox>
 
             {/*********************************************** Statistics ***********************************************************************/}
@@ -542,7 +598,7 @@ export default function MainLobby() {
                 <BorderBox>
                     <Button
                         onClick={getTeams}>
-                        Update
+                        Reset Squad
                     </Button>
                 </BorderBox>
                 <TableContainer component={Paper}>
@@ -654,7 +710,8 @@ export default function MainLobby() {
                             <Grid item xs={4} sx={{ padding: '10px' }}>
                                 <Button
                                     variant="contained"
-                                    color="success">
+                                    color="success"
+                                    onClick={() => ExecuteSubstitutions()}>
                                     Execute
                                 </Button>
                             </Grid>
@@ -720,7 +777,7 @@ export default function MainLobby() {
                                     variant="contained"
                                     color="success"
                                     onClick={() => {
-                                        if (sub !== null && subFor !== null) {
+                                        if (sub !== '' && subFor !== '') {
                                             console.log("hello");
                                             setSubstitutions([...Substitutions, {
                                                 nameSub: GetPlayer(sub),
@@ -729,6 +786,9 @@ export default function MainLobby() {
                                                 numberPlayer: subFor,
                                                 //active:sub.active,
                                             },])
+                                            setSub('');
+                                            setSubFor('');
+                                            console.log(Substitutions)
                                         }
 
                                     }}>
