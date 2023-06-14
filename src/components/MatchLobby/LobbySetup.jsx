@@ -41,11 +41,12 @@ export default function LobbySetup() {
     const [addMatchDialogOpen, setAddMatchDialogOpen] = useState(false);
     const [matchDetailsPOST, setMatchDetailsPOST] = useState(
         {
-            "match_date": "20230606",
-            "match_start_time": "123000",
-            "match_season": 0,
-            "team_a_id": 0,
-            "team_b_id": 0
+            match_date: '20230606',
+            match_start_time: '123000',
+            match_season:0,
+            match_season: 0,
+            team_a_id: 0,
+            team_b_id: 0
         }
     );
 
@@ -68,14 +69,20 @@ export default function LobbySetup() {
         }));
     };
 
-    const putMatch = () => {
+    const postMatch = async() => {
         try {
-            const req = axios.post('/api/matches/', matchDetailsPOST);
+            await axios.post('/api/matches/', matchDetailsPOST).then((response) => {
+                const resp = axios.get('/api/matches/').then((response) =>{
+                    const length = response?.data.length - 1;
+                    navigate(`/lobby/${length}`);
+
+                })
+                
+            });
         } catch (error) {
             console.log(error);
         }
     }
-
 
     const fetchSeasons = async () => {
         try {
@@ -147,7 +154,6 @@ export default function LobbySetup() {
 
     useEffect(() => {
         fetchSeasons();
-        putMatch();
         fetchTeams();
         fetchEvents(0);
         fetchSeasonInfo(0);
@@ -218,19 +224,9 @@ export default function LobbySetup() {
                             variant="contained"
                             color="success"
                             onClick={
-                                () => putMatch()
+                                () => postMatch()
                             }>
                             Start Lobby
-                        </Button>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'right', marginTop: '22px', }}>
-                        <Button
-                            variant="contained"
-                            color="success"
-                            onClick={
-                                            () => navigate(`/lobby/${MatchDetails.match_id}`)
-                                        }>
-                            Start Lobby FOR REAL THIS TIME
                         </Button>
                     </Box>
                 </BorderBox>
